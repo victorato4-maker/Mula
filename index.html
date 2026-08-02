@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,17 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MenuPlus Mula</title>
 <style>
-body{margin:0;font-family:Arial;background:#F5F7FA;color:#002F6C}
+body{margin:0;font-family:Arial;background:#F5F7FA;color:#002F6C;padding-bottom:80px;}
 header{background:#002F6C;padding:20px;text-align:center;color:#fff}
-header img{width:80px} header h1{color:#FFC300;margin:5px 0}
-.container{padding:20px;max-width:650px;margin:auto;background:#fff}
-.card{border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 3px 10px rgba(0,0,0,0.08)}
+header img{width:100px;background:#FFC300;padding:10px;border-radius:10px}
+header h1{color:#FFC300;margin:10px 0 5px}
+.container{padding:20px;max-width:650px;margin:auto}
+.card{border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 3px 10px rgba(0,0,0,.1)}
 .amarilla{background:#FFC300;position:relative}
 .blanca{background:#fff;border:1px solid #eee}
-.recomendado{position:absolute;top:-10px;right:15px;background:#002F6C;color:#fff;padding:5px 12px;font-size:12px;border-radius:0 0 8px 8px;font-weight:bold}
-.precio{font-size:40px;font-weight:bold;color:#002F6C}
-.btn{background:#FFC300;color:#002F6C;padding:14px;border:none;border-radius:10px;width:100%;font-size:16px;font-weight:bold;margin-top:15px}
-footer{background:#002F6C;padding:12px;display:flex;justify-content:space-around;color:#fff;position:sticky;bottom:0}
+.recomendado{position:absolute;top:-10px;right:15px;background:#002F6C;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px}
+.precio{font-size:40px;font-weight:bold;color:#002F6C;margin:10px 0}
+.botones{margin-top:10px}
+.botones a{margin-right:15px;text-decoration:none;color:#002F6C;font-weight:bold}
+.btn{background:#FFC300;color:#002F6C;padding:14px;border:none;border-radius:10px;width:100%;font-weight:bold;font-size:16px}
+footer{background:#002F6C;padding:12px;display:flex;justify-content:space-around;position:fixed;bottom:0;width:100%;left:0}
+footer div{color:#fff;text-align:center;font-size:12px}
 </style>
 </head>
 <body>
@@ -32,25 +35,42 @@ footer{background:#002F6C;padding:12px;display:flex;justify-content:space-around
 <h3>BAR CASINO</h3>
 <div>🍣 Sushi variado 20 piezas</div>
 <div class="precio">15€</div>
+<div class="botones">
+<a href="tel:968630000">📞 Llamar</a>
+<a href="https://maps.google.com/?q=BAR+CASINO+Mula" target="_blank">📍 Cómo llegar</a>
+</div>
 </div>
 
 <div class="card blanca">
 <h3>LA TASCA</h3>
 <div>🍴 Menú del Día</div>
 <div class="precio">12€</div>
+<div class="botones">
+<a href="tel:968640000">📞 Llamar</a>
+<a href="https://maps.google.com/?q=LA+TASCA+Mula" target="_blank">📍 Cómo llegar</a>
+</div>
 </div>
 
 <div class="card blanca">
 <h3>EL RINCÓN</h3>
 <div>🍺 Tapas + Caña</div>
 <div class="precio">2.50€</div>
+<div class="botones">
+<a href="tel:968650000">📞 Llamar</a>
+<a href="https://maps.google.com/?q=EL+RINCON+Mula" target="_blank">📍 Cómo llegar</a>
+</div>
 </div>
 
 <div style="border:2px solid #FFC300;padding:20px;border-radius:16px;margin-top:30px;text-align:center">
 <h3>¿Eres dueño de un bar en Mula?</h3>
-<button class="btn" onclick="window.open('https://wa.me/34684228068?text=Hola%20MenuPlus%2C%20quiero%20dar%20de%20alta%20mi%20bar%20en%20Mula','_blank')">Habla con nosotros por WhatsApp</button>
+<button class="btn" onclick="window.open('https://wa.me/34684228068?text=Hola%20MenuPlus')">Publica tu oferta aquí</button>
 </div>
 </div>
-<footer><div>🏠<br>Inicio</div><div>🔍<br>Buscar</div><div>📤<br>Compartir</div></footer>
+
+<footer>
+<div>🏠<br>Inicio</div>
+<div>🔍<br>Buscar</div>
+<div>📤<br>Compartir</div>
+</footer>
 </body>
 </html>
