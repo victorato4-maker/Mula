@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,27 +6,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MenuPlus Mula</title>
 <style>
-body{font-family:Arial,sans-serif;margin:0;padding:0}
-header{background:#FF6B00;color:#fff;padding:20px;text-align:center}
-.hero{padding:60px 20px;text-align:center;background:#FFF5F0}
-.btn{background:#FF6B00;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:15px}
-footer{background:#1a1a1a;color:#fff;padding:30px;text-align:center;font-size:14px}
+body{margin:0;font-family:Arial;background:#F5F7FA;color:#002F6C}
+header{background:#002F6C;padding:20px;text-align:center;color:#fff}
+header img{width:80px} header h1{color:#FFC300;margin:5px 0}
+.container{padding:20px;max-width:650px;margin:auto;background:#fff}
+.card{border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 3px 10px rgba(0,0,0,0.08)}
+.amarilla{background:#FFC300;position:relative}
+.blanca{background:#fff;border:1px solid #eee}
+.recomendado{position:absolute;top:-10px;right:15px;background:#002F6C;color:#fff;padding:5px 12px;font-size:12px;border-radius:0 0 8px 8px;font-weight:bold}
+.precio{font-size:40px;font-weight:bold;color:#002F6C}
+.btn{background:#FFC300;color:#002F6C;padding:14px;border:none;border-radius:10px;width:100%;font-size:16px;font-weight:bold;margin-top:15px}
+footer{background:#002F6C;padding:12px;display:flex;justify-content:space-around;color:#fff;position:sticky;bottom:0}
 </style>
 </head>
 <body>
-<header><h1>MenuPlus</h1></header>
-<section class="hero">
-<h2>Tu carta digital en Mula en 5 minutos</h2>
-<p>Olvídate de imprimir cartas. Los clientes escanean y listo.</p>
-<a href="https://wa.me/34684228068" class="btn">WhatsApp</a>
-</section>
-<section style="padding:40px 20px">
-<h2 style="text-align:center">¿Por qué MenuPlus?</h2>
-<p style="text-align:center">Rápido, Sin App, Ahorras dinero</p>
-</section>
-<footer>
-<p>© 2026 MenuPlus</p>
-<a href="#legal" style="color:#FF6B00">Aviso Legal</a> | <a href="#privacidad" style="color:#FF6B00">Privacidad</a>
-</footer>
+<header>
+<img src="logo-menuplus.png">
+<h1>MenuPlus Mula</h1><p>Descubre las mejores ofertas de hoy</p>
+</header>
+<div class="container">
+<h2>Bares en Mula</h2><p>Actualizado hoy, 2 ago 2026</p>
+
+<div class="card amarilla">
+<div class="recomendado">Recomendado Menuplus</div>
+<h3>BAR CASINO</h3>
+<div>🍣 Sushi variado 20 piezas</div>
+<div class="precio">15€</div>
+</div>
+
+<div class="card blanca">
+<h3>LA TASCA</h3>
+<div>🍴 Menú del Día</div>
+<div class="precio">12€</div>
+</div>
+
+<div class="card blanca">
+<h3>EL RINCÓN</h3>
+<div>🍺 Tapas + Caña</div>
+<div class="precio">2.50€</div>
+</div>
+
+<div style="border:2px solid #FFC300;padding:20px;border-radius:16px;margin-top:30px;text-align:center">
+<h3>¿Eres dueño de un bar en Mula?</h3>
+<button class="btn" onclick="window.open('https://wa.me/34684228068?text=Hola%20MenuPlus%2C%20quiero%20dar%20de%20alta%20mi%20bar%20en%20Mula','_blank')">Habla con nosotros por WhatsApp</button>
+</div>
+</div>
+<footer><div>🏠<br>Inicio</div><div>🔍<br>Buscar</div><div>📤<br>Compartir</div></footer>
 </body>
 </html>
