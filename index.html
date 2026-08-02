@@ -20,7 +20,24 @@ header h1{color:#FFC300;margin:10px 0 5px}
 .btn{background:#FFC300;color:#002F6C;padding:14px;border:none;border-radius:10px;width:100%;font-weight:bold;font-size:16px}
 footer{background:#002F6C;padding:12px;display:flex;justify-content:space-around;position:fixed;bottom:0;width:100%;left:0}
 footer div{color:#fff;text-align:center;font-size:12px}
-</style>
+</style><script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",
+    authDomain: "menuplus-mula.firebaseapp.com",
+    projectId: "menuplus-mula",
+    storageBucket: "menuplus-mula.firebasestorage.app",
+    messagingSenderId: "90841339782",
+    appId: "1:90841339782:web:267a5bfb0c8338882a7e07"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+</script>
 </head>
 <body>
 <header>
