@@ -1,48 +1,43 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><title>Panel MenuPlus</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Bar - MenuPlus</title>
+<style>
+body{font-family:Arial;background:#002F6C;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.box{background:#fff;padding:25px;border-radius:16px;width:90%;max-width:400px;box-shadow:0 5px 20px rgba(0,0,0,.2)}
+h2{text-align:center;color:#002F6C;margin-bottom:20px}
+input,textarea,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box;font-size:15px}
+button{background:#FFC300;color:#002F6C;border:none;padding:14px;border-radius:10px;width:100%;font-weight:bold;font-size:16px;cursor:pointer;margin-top:10px}
+button:hover{background:#e6b000}
+label{font-size:13px;color:#555;font-weight:bold}
+#panel{display:none}
+small{color:#777}
+</style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<style>body{background:#0A2540}.btn-yellow{background:#FFC700;color:#0A2540}</style>
 </head>
-<body class="text-white">
-<div id="login" class="max-w-md mx-auto mt-20 p-6 bg-white text-black rounded-lg">
-<h1 class="text-2xl font-bold mb-4 text-center">MenuPlus - Panel Bar</h1>
-<input id="email" type="email" placeholder="Email del bar" class="w-full p-2 border mb-2 rounded">
-<input id="telefono" type="tel" placeholder="Teléfono del local: 612345678" class="w-full p-2 border mb-2 rounded">
-<input id="pass" type="password" placeholder="Contraseña" class="w-full p-2 border mb-4 rounded">
-<button onclick="login()" class="w-full btn-yellow font-bold py-2 rounded">Entrar / Registrarse</button>
-<p id="error" class="text-red-600 mt-2 text-center"></p>
+<body>
+<div class="box" id="loginBox">
+<h2>MenuPlus - Panel Bar</h2>
+<input id="email" type="email" placeholder="Email del bar">
+<input id="password" type="password" placeholder="Contraseña">
+<button onclick="entrar()">Entrar / Registrarse</button>
 </div>
 
-<div id="baneado" class="hidden max-w-md mx-auto mt-20 p-6 bg-red-600 text-white rounded-lg text-center">
-<h1 class="text-2xl font-bold mb-4">❌ CUENTA SUSPENDIDA</h1>
-<p>Tu bar ha sido suspendido por MenuPlus por incumplir normas.</p>
-<p class="mt-2">Contacta: victorato4@hotmail.com</p>
-</div>
-
-<div id="panel" class="hidden max-w-2xl mx-auto mt-10 p-6">
-<h1 class="text-3xl font-bold text-center">Hola <span id="barName"></span></h1>
-<p id="status" class="mb-4"></p>
-<div id="formulario" class="bg-white text-black p-6 rounded-lg">
-<label class="font-bold">Escribe tu menú o oferta:</label>
-<textarea id="textoMenu" rows="4" class="w-full p-2 border rounded mt-2"></textarea>
-<button id="btnPublicar" onclick="publicar()" class="w-full btn-yellow font-bold py-3 rounded mt-4">PUBLICAR MENÚ</button>
-<button id="btnBorrar" onclick="borrar()" class="w-full bg-red-600 text-white font-bold py-2 rounded mt-2">BORRAR MI ANUNCIO</button>
-</div>
-<div id="vistaPrevia" class="mt-6 hidden">
-<h2 class="font-bold mb-2">Tu imagen para WhatsApp:</h2>
-<div id="plantilla" class="bg-[#0A2540] p-6 rounded-lg border-4 border-[#FFC700]">
-<img src="logo-menuplus.png" class="h-12 mx-auto mb-4">
-<p id="textoEnImagen" class="text-white text-2xl text-center font-bold"></p>
-<p class="text-[#FFC700] text-center mt-4">menuplus.es</p>
-</div>
-<button onclick="descargarImagen()" class="w-full btn-yellow font-bold py-2 rounded mt-2">DESCARGAR IMAGEN</button>
-</div>
+<div class="box" id="panel">
+<h2>Publicar Menú de Hoy</h2>
+<label>Nombre del Bar</label>
+<input id="bar" placeholder="Ej: Bar La Plaza">
+<label>Teléfono WhatsApp para Pedidos</label>
+<input id="barTelefono" type="tel" placeholder="Ej: 684228068">
+<small>Este número saldrá en el botón "Pedir al Bar". Puedes cambiarlo cuando quieras</small>
+<label>Turno</label>
+<select id="turno"><option value="comida">Comida 8:00 - 16:00</option><option value="cena">Cena 16:00 - 23:30</option></select>
+<label>Menú del día</label>
+<textarea id="texto" rows="6" placeholder="Ej: Menu del dia 12€&#10;Lentejas + Pollo + Postre + Bebida"></textarea>
+<button onclick="publicar()">Publicar Oferta</button>
+<button onclick="salir()" style="background:#ccc">Cerrar Sesión</button>
 </div>
 
 <script>
@@ -54,14 +49,59 @@ const firebaseConfig = {
   messagingSenderId: "90841339782",
   appId: "1:90841339782:web:267a5bfb0c8338882a7e07"
 };
-firebase.initializeApp(firebaseConfig); const auth=firebase.auth(); const db=firebase.firestore(); let userId=null; let userTelefono="";
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+let usuarioActual="";
 
-function getTurno(){const h=new Date().getHours()+new Date().getMinutes()/60; if(h>=8&&h<16)return"comida"; if(h>=16&&h<23.5)return"cena"; return"cerrado";}
+function entrar(){
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('password').value;
+  if(!email||!pass){alert("Pon email y contraseña");return}
 
-function actualizarUI(){const t=getTurno(); const btn=document.getElementById('btnPublicar'); const form=document.getElementById('formulario'); const status=document.getElementById('status'); if(t==="cerrado"){form.style.display='none'; status.innerText="CERRADO: VUELVE A PARTIR DE LAS 8:00"; status.style.background="#FFC700"; status.style.color="#0A2540"; status.style.fontSize="28px"; status.style.fontWeight="bold"; status.style.padding="30px"; status.style.textAlign="center"; status.style.borderRadius="12px"; status.style.margin="40px auto"; status.style.maxWidth="600px"}else{form.style.display='block'; btn.innerText=`PUBLICAR MENÚ DE ${t.toUpperCase()}`; status.innerText=`Horario activo: ${t}`; status.style.background=""; status.style.color=""; status.style.fontSize=""; status.style.padding=""; status.style.margin=""}}
+  db.collection("bares").doc(email).get().then(doc=>{
+    if(doc.exists){
+      if(doc.data().pass!== pass){alert("Contraseña incorrecta");return}
+      usuarioActual=email;
+      // Cargamos el teléfono que tenía guardado
+      document.getElementById('barTelefono').value = doc.data().telefono || "";
+      document.getElementById('bar').value = doc.data().nombre || email.split('@')[0];
+    }else{
+      // Es nuevo registro
+      db.collection("bares").doc(email).set({pass:pass, telefono:"", nombre:""})
+      usuarioActual=email;
+    }
+    document.getElementById('loginBox').style.display="none";
+    document.getElementById('panel').style.display="block";
+  })
+}
 
-async function publicar(){
-  const texto=document.getElementById('textoMenu').value; 
-  const t=getTurno(); 
-  if(!texto)return alert("Escribe algo"); 
-  if(t==="cerr
+function publicar(){
+  const bar=document.getElementById('bar').value;
+  const tel=document.getElementById('barTelefono').value;
+  const turno=document.getElementById('turno').value;
+  const texto=document.getElementById('texto').value;
+  if(!bar||!texto){alert("Completa bar y menú");return}
+
+  // 1. Guardamos el teléfono y nombre en el perfil del bar
+  db.collection("bares").doc(usuarioActual).update({
+    telefono: tel,
+    nombre: bar
+  });
+
+  // 2. Publicamos la oferta con ese teléfono
+  db.collection("anuncios").add({
+    bar: bar+"@"+usuarioActual,
+    telefono: tel, // <- para que index.html lo use
+    turno:turno,
+    texto:texto,
+    fecha:new Date().toLocaleDateString()
+  }).then(()=>alert("¡Publicado! Se verá en menuplus.es"))
+}
+
+function salir(){
+  document.getElementById('loginBox').style.display="block";
+  document.getElementById('panel').style.display="none";
+}
+</script>
+</body>
+</html>
