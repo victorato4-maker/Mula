@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MenuPlus - Panel de Bares</title>
+<title>MenuPlus - Panel</title>
 <style>
 body{font-family:Arial;background:#F8F9FA;margin:0;padding:20px;color:#002F6C}
 .container{max-width:700px;margin:auto;background:#fff;padding:25px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-h1{color:#002F6C;text-align:center;margin-bottom:20px}
-input,select,textarea,button{width:100%;padding:12px;margin:8px 0;border:2px solid #FFC300;border-radius:8px;font-size:16px;box-sizing:border-box}
+h1{color:#002F6C;text-align:center}
+input,textarea,button{width:100%;padding:12px;margin:6px 0;border:2px solid #FFC300;border-radius:8px;font-size:16px;box-sizing:border-box}
 button{background:#002F6C;color:#FFC300;border:none;font-weight:800;cursor:pointer;font-size:18px}
 button:hover{opacity:.9}
 .hidden{display:none}
@@ -16,9 +16,11 @@ button:hover{opacity:.9}
 .tabs button{flex:1;background:#FFC300;color:#002F6C}
 .tabs button.active{background:#002F6C;color:#FFC300}
 .checks{display:flex;gap:15px;margin:10px 0}
-.checks label{font-weight:700}
+.plato-input{display:flex;gap:8px;margin-bottom:6px}
+.plato-input input{margin:0}
+.plato-input button{width:45px;padding:0;background:#c00;color:#fff}
 #preview{margin-top:20px;text-align:center}
-#preview img{max-width:100%;border:4px solid #FFC300;border-radius:12px}
+#preview canvas{width:100%!important;height:auto!important;border:4px solid #FFC300;border-radius:12px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -33,11 +35,13 @@ button:hover{opacity:.9}
 <div id="auth">
   <input id="email" type="email" placeholder="Correo del bar">
   <input id="pass" type="password" placeholder="Contraseña">
-  <input id="nombreBar" placeholder="Nombre del Bar">
-  <input id="telefono" placeholder="Teléfono">
-  <button onclick="registrar()">Registrarse</button>
+  <div id="extraCampos" class="hidden">
+    <input id="nombreBar" placeholder="Nombre del Bar">
+    <input id="telefono" placeholder="Teléfono">
+  </div>
+  <button onclick="mostrarRegistro()">Registrarse</button>
   <button onclick="login()">Entrar</button>
-  <p id="authMsg"></p>
+  <p id="authMsg" style="color:#c00"></p>
 </div>
 
 <div id="panel" class="hidden">
@@ -56,9 +60,19 @@ button:hover{opacity:.9}
 
   <div id="formMenu" class="hidden">
     <input id="precio" type="number" step="0.01" placeholder="Precio € Ej: 12.50">
-    <textarea id="primeros" rows="3" placeholder="PRIMEROS: Separados por coma. Ej: Lentejas, Ensalada"></textarea>
-    <textarea id="segundos" rows="3" placeholder="SEGUNDOS: Ej: Pollo asado, Merluza"></textarea>
-    <textarea id="postres" rows="2" placeholder="POSTRES: Ej: Flan, Fruta"></textarea>
+
+    <b>PRIMEROS</b>
+    <div id="listaPrimeros"></div>
+    <button onclick="addPlato('primeros')" style="background:#FFC300;color:#002F6C">+ Añadir Primero</button>
+
+    <b>SEGUNDOS</b>
+    <div id="listaSegundos"></div>
+    <button onclick="addPlato('segundos')" style="background:#FFC300;color:#002F6C">+ Añadir Segundo</button>
+
+    <b>POSTRES</b>
+    <div id="listaPostres"></div>
+    <button onclick="addPlato('postres')" style="background:#FFC300;color:#002F6C">+ Añadir Postre</button>
+
     <div class="checks">
       <label><input type="checkbox" id="ensalada"> 🥗 Incluye Ensalada</label>
       <label><input type="checkbox" id="cafe"> ☕ Incluye Café</label>
@@ -69,7 +83,6 @@ button:hover{opacity:.9}
   <p id="msg"></p>
   <div id="preview"></div>
 </div>
-
 </div>
 
 <script>
@@ -88,24 +101,28 @@ const storage=firebase.storage();
 
 let tipoActual='oferta';
 let nombreBar='';
-let telefonoBar='';
+let contadores={primeros:0,segundos:0,postres:0};
 
 auth.onAuthStateChanged(user=>{
   if(user){
-    if(!user.emailVerified){auth.signOut();document.getElementById('authMsg').innerText='Verifica tu correo primero';return}
     document.getElementById('auth').classList.add('hidden');
     document.getElementById('panel').classList.remove('hidden');
     db.collection('bares').doc(user.uid).get().then(doc=>{
-      nombreBar=doc.data().nombre;
-      telefonoBar=doc.data().telefono;
-      document.getElementById('bienvenida').innerText='Hola '+nombreBar;
+      if(doc.exists){
+        nombreBar=doc.data().nombre;
+        document.getElementById('bienvenida').innerText='Hola '+nombreBar;
+      }
     });
+    addPlato('primeros'); addPlato('primeros');
+    addPlato('segundos'); addPlato('segundos');
+    addPlato('postres');
   }else{
     document.getElementById('auth').classList.remove('hidden');
     document.getElementById('panel').classList.add('hidden');
   }
 });
 
+function mostrarRegistro(){document.getElementById('extraCampos').classList.remove('hidden');}
 function setTipo(t){
   tipoActual=t;
   document.getElementById('btnOferta').classList.toggle('active',t==='oferta');
@@ -113,57 +130,69 @@ function setTipo(t){
   document.getElementById('formOferta').classList.toggle('hidden',t!=='oferta');
   document.getElementById('formMenu').classList.toggle('hidden',t!=='menu');
 }
-
+function addPlato(tipo){
+  contadores[tipo]++;
+  const div=document.createElement('div');
+  div.className='plato-input';
+  div.innerHTML=`<input id="${tipo}_${contadores[tipo]}" placeholder="Plato ${contadores[tipo]}"><button onclick="this.parentNode.remove()">X</button>`;
+  document.getElementById('lista'+tipo.charAt(0).toUpperCase()+tipo.slice(1)).appendChild(div);
+}
+function getPlatos(tipo){
+  let platos=[];
+  document.querySelectorAll(`#lista${tipo.charAt(0).toUpperCase()+tipo.slice(1)} input`).forEach(i=>{
+    if(i.value.trim()) platos.push(i.value.trim());
+  });
+  return platos;
+}
+function login(){
+  auth.signInWithEmailAndPassword(document.getElementById('email').value,document.getElementById('pass').value)
+.catch(err=>document.getElementById('authMsg').innerText=err.message);
+}
 function registrar(){
   const e=document.getElementById('email').value;
   const p=document.getElementById('pass').value;
   const n=document.getElementById('nombreBar').value;
   const t=document.getElementById('telefono').value;
+  if(!n ||!t) return alert('Rellena nombre y teléfono');
   auth.createUserWithEmailAndPassword(e,p).then(cred=>{
-    cred.user.sendEmailVerification();
     db.collection('bares').doc(cred.user.uid).set({nombre:n,telefono:t,email:e});
-    document.getElementById('authMsg').innerText='Registrado. Revisa tu correo para verificar';
+    document.getElementById('authMsg').innerText='Registrado. Ya puedes entrar';
   }).catch(err=>document.getElementById('authMsg').innerText=err.message);
 }
-
-function login(){
-  const e=document.getElementById('email').value;
-  const p=document.getElementById('pass').value;
-  auth.signInWithEmailAndPassword(e,p).catch(err=>document.getElementById('authMsg').innerText=err.message);
-}
-
 function logout(){auth.signOut()}
-
-function getTurno(){
-  const h=new Date().getHours()+new Date().getMinutes()/60;
-  if(h>=8&&h<16)return"comida";
-  if(h>=16&&h<23.5)return"cena";
-  return"cerrado";
-}
 
 async function generarImagen(datos){
   const div = document.createElement('div');
-  div.style.width = '1080px'; 
-  div.style.height = '1080px';
+  div.style.width = '1080px';
+  div.style.height = '1350px';
   div.style.padding = '60px';
-  div.style.fontFamily = 'Impact, Arial Black, sans-serif';
+  div.style.fontFamily = 'Arial Black, sans-serif';
+  div.style.background = 'linear-gradient(135deg, #FFC300 0%, #FFD700 100%)';
+  div.style.color = '#002F6C';
   div.style.boxSizing = 'border-box';
   div.style.display = 'flex';
   div.style.flexDirection = 'column';
-  div.style.justifyContent = 'center';
-  div.style.background = 'linear-gradient(135deg, #FFC300 0%, #FFD700 100%)';
-  div.style.color = '#002F6C';
 
   if(datos.tipo === 'oferta'){
-    div.innerHTML = `<h1 style="text-align:center;font-size:110px;margin:0;text-shadow:4px 4px 0 #fff">OFERTA</h1><h2 style="text-align:center;font-size:60px;margin:10px 0">${datos.bar}</h2><div style="background:#fff;color:#002F6C;padding:40px;border-radius:30px;margin-top:20px;font-size:75px;font-weight:900;text-align:center;line-height:1.3;border:8px solid #002F6C">${datos.texto}</div>`; 
+    div.innerHTML = `<div style="text-align:center"><h1 style="font-size:120px;margin:0;text-shadow:4px 4px 0 #fff">OFERTA</h1><h2 style="font-size:70px;margin:10px 0">${datos.bar}</h2></div><div style="background:#fff;color:#002F6C;padding:50px;border-radius:30px;margin:auto 0;font-size:85px;font-weight:900;text-align:center;border:10px solid #002F6C">${datos.texto}</div>`;
   } else {
     let extras = '';
-    if(datos.incluyeEnsalada) extras += ' + Ensalada';
-    if(datos.incluyeCafe) extras += ' + Café';
-    div.innerHTML = `<div style="text-align:center;margin-bottom:20px"><h1 style="color:#002F6C;font-size:90px;margin:0;text-shadow:3px 3px 0 #fff">MENÚ DEL DÍA</h1><h2 style="color:#002F6C;font-size:45px;margin:5px 0">${datos.bar}</h2></div><h3 style="color:#002F6C;border-bottom:5px solid #002F6C;font-size:45px;margin-bottom:10px">PRIMEROS</h3><ul style="font-size:40px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.primeros.map(p=>`<li>✓ ${p}</li>`).join('')}</ul><h3 style="color:#002F6C;border-bottom:5px solid #002F6C;font-size:45px;margin-bottom:10px">SEGUNDOS</h3><ul style="font-size:40px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.segundos.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>${datos.postres.length>0 ? `<h3 style="color:#002F6C;border-bottom:5px solid #002F6C;font-size:45px;margin-bottom:10px">POSTRES</h3><ul style="font-size:40px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.postres.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>` : ''}<div style="margin-top:auto;text-align:center;font-size:75px;font-weight:900;color:#FFC300;background:#002F6C;padding:30px;border-radius:25px;border:6px solid #fff">${datos.precio}€ ${extras}</div>`;
+    if(datos.incluyeEnsalada) extras += '🥗 ';
+    if(datos.incluyeCafe) extras += '☕ ';
+    div.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px">
+      <h1 style="font-size:85px;margin:0;text-shadow:3px 3px 0 #fff">MENÚ DEL DÍA</h1>
+      <h2 style="font-size:45px;margin:5px 0">${datos.bar}</h2>
+    </div>
+    <h3 style="border-bottom:6px solid #002F6C;font-size:50px;margin-bottom:15px">PRIMEROS</h3>
+    <ul style="font-size:38px;line-height:1.6;margin:0 0 25px 0;list-style:none;padding:0">${datos.primeros.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>
+    <h3 style="border-bottom:6px solid #002F6C;font-size:50px;margin-bottom:15px">SEGUNDOS</h3>
+    <ul style="font-size:38px;line-height:1.6;margin:0 0 25px 0;list-style:none;padding:0">${datos.segundos.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>
+    ${datos.postres.length>0? `<h3 style="border-bottom:6px solid #002F6C;font-size:50px;margin-bottom:15px">POSTRES</h3><ul style="font-size:38px;line-height:1.6;margin:0 0 25px 0;list-style:none;padding:0">${datos.postres.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>` : ''}
+    <div style="margin-top:auto;text-align:center;font-size:90px;font-weight:900;color:#FFC300;background:#002F6C;padding:40px;border-radius:30px;border:8px solid #fff">${datos.precio}€ ${extras}</div>`;
   }
   document.body.appendChild(div);
-  const canvas = await html2canvas(div, {scale: 2, backgroundColor: null});
+  const canvas = await html2canvas(div, {scale: 1});
   document.body.removeChild(div);
   document.getElementById('preview').innerHTML='<h3>Vista Previa:</h3>';
   document.getElementById('preview').appendChild(canvas);
@@ -171,47 +200,42 @@ async function generarImagen(datos){
     canvas.toBlob(async (blob)=>{
       const ref = storage.ref(`publicaciones/${Date.now()}.png`);
       await ref.put(blob);
-      const url = await ref.getDownloadURL();
-      resolve(url);
+      resolve(await ref.getDownloadURL());
     }, 'image/png');
   });
 }
 
 async function publicar(){
-  const turno=getTurno();
-  if(turno==='cerrado'){document.getElementById('msg').innerText='Fuera de horario. Solo 8:00 a 23:30';return}
-  
   let datos={bar:nombreBar,tipo:tipoActual};
   if(tipoActual==='oferta'){
     datos.texto=document.getElementById('textoOferta').value;
     if(!datos.texto)return alert('Escribe la oferta');
   } else {
     datos.precio=document.getElementById('precio').value;
-    datos.primeros=document.getElementById('primeros').value.split(',').map(s=>s.trim()).filter(Boolean);
-    datos.segundos=document.getElementById('segundos').value.split(',').map(s=>s.trim()).filter(Boolean);
-    datos.postres=document.getElementById('postres').value.split(',').map(s=>s.trim()).filter(Boolean);
+    datos.primeros=getPlatos('primeros');
+    datos.segundos=getPlatos('segundos');
+    datos.postres=getPlatos('postres');
     datos.incluyeEnsalada=document.getElementById('ensalada').checked;
     datos.incluyeCafe=document.getElementById('cafe').checked;
-    if(!datos.precio)return alert('Pon el precio');
+    if(!datos.precio || datos.primeros.length===0 || datos.segundos.length===0)return alert('Falta precio o platos');
   }
 
-  document.getElementById('msg').innerText='Generando imagen...';
+  document.getElementById('msg').innerText='Publicando...';
   const urlImagen=await generarImagen(datos);
 
-  // AQUI GUARDAMOS TODO PARA QUE SALGA GRANDE EN EL INDEX
   await db.collection("anuncios").add({
     bar: nombreBar,
-    telefono: telefonoBar,
-    turno: turno,
+    turno: new Date().getHours()<16? "comida" : "cena",
     tipo: tipoActual,
     imagenUrl: urlImagen,
-    precio: datos.precio || "Consultar",
+    precio: datos.precio || "Ver",
+    textoOferta: datos.texto || "",
     incluyeEnsalada: datos.incluyeEnsalada || false,
     incluyeCafe: datos.incluyeCafe || false,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  document.getElementById('msg').innerText='✅ Publicado en '+turno;
+  document.getElementById('msg').innerText='✅ Publicado! Recarga menuplus.es';
 }
 </script>
 </body>
