@@ -10,31 +10,25 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial;back
 header{background:#002F6C;padding:18px 20px;color:#fff}
 header h1{color:#FFC300;margin:0;font-size:24px;font-weight:800}
 header h1 span{color:#fff}
-
 .debug-bar{background:#002F6C;color:#FFC300;padding:10px;text-align:center;font-weight:700;font-size:13px;border-bottom:3px solid #FFC300}
-
 .container{padding:20px;max-width:700px;margin:auto}
 .container h2{font-size:28px;margin:15px 0 5px;font-weight:800;color:#002F6C}
 .container p.sub{color:#666;margin:0 0 25px;font-size:14px}
-
-.card{border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative}
+.card{border-radius:18px;padding:0;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative;overflow:hidden}
 .amarilla{background:#FFC300}
 .blanca{background:#fff}
-
-.cinta{position:absolute;top:0;right:16px;background:#002F6C;color:#FFC300;padding:5px 12px;border-radius:0 0 8px 8px;font-size:11px;font-weight:700;text-align:center;line-height:1.3}
-
+.cinta{position:absolute;top:0;right:16px;background:#002F6C;color:#FFC300;padding:5px 12px;border-radius:0 0 8px 8px;font-size:11px;font-weight:700;text-align:center;line-height:1.3;z-index:2}
+.card-img{width:100%;display:block;border-radius:18px}
+.card-body{padding:20px}
 .card h3{margin:0 0 12px;font-size:22px;color:#002F6C;font-weight:800}
 .card-content{display:flex;gap:15px;align-items:center}
 .icono{font-size:40px;flex-shrink:0}
-
 .info{flex:1}
 .label{font-size:13px;font-weight:700;margin-bottom:4px;color:#002F6C}
 .titulo-oferta{font-size:16px;margin-bottom:10px;color:#002F6C;font-weight:700}
 .precio{font-size:52px;font-weight:800;color:#002F6C;line-height:1;margin-bottom:12px}
 .precio small{font-size:26px}
-
 .btn-llamar{display:block;width:100%;text-decoration:none;text-align:center;padding:12px;border-radius:10px;font-weight:800;font-size:15px;background:#002F6C;color:#FFC300;display:flex;align-items:center;justify-content:center;gap:8px}
-
 .footer-nav{position:fixed;bottom:0;left:0;right:0;background:#002F6C;display:flex;justify-content:space-around;padding:8px 0;color:#fff}
 .footer-nav div{text-align:center;font-size:11px;opacity:.7}
 .footer-nav.active{opacity:1}
@@ -42,6 +36,7 @@ header h1 span{color:#fff}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 <header><h1>Menuplus <span>Mula</span></h1></header>
@@ -62,7 +57,7 @@ header h1 span{color:#fff}
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCfKMgXwZqzH_v8D4ua5UHLeKIL-Z3iKog",
+  apiKey: "AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",
   authDomain: "menuplus-mula.firebaseapp.com",
   projectId: "menuplus-mula",
   storageBucket: "menuplus-mula.firebasestorage.app",
@@ -71,6 +66,9 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const storage=firebase.storage();
+
+let yaBorradoHoy = {comida: false, cena: false};
 
 function getTurno(){
   const h=new Date().getHours()+new Date().getMinutes()/60;
@@ -79,39 +77,48 @@ function getTurno(){
   return"cerrado";
 }
 
-function extraerPrecio(texto){
-  const match = texto.match(/(\d+[,.]?\d*)\s*€/);
-  return match? match[1] : '';
-}
-function getIcono(texto){
-  texto = texto.toLowerCase();
-  if(texto.includes('sushi')) return '🍣';
-  if(texto.includes('menu') || texto.includes('plato') || texto.includes('bandeja')) return '🍴';
-  if(texto.includes('tapa') || texto.includes('caña') || texto.includes('cerveza')) return '🍺';
-  if(texto.includes('vino')) return '🍷';
-  return '🍽️';
-}
+// BORRADO AUTOMÁTICO 16:30 Y 23:30
+function iniciarBorradoAutomatico(){
+  setInterval(async () => {
+    const ahora = new Date();
+    const horas = ahora.getHours();
+    const minutos = ahora.getMinutes();
 
-// BORRAR AUTOMÁTICO A LAS 16:30 Y 23:30
-function programarBorrado() {
-  const ahora = new Date();
-  const horas = ahora.getHours();
-  const minutos = ahora.getMinutes();
+    if(horas === 16 && minutos === 30 && !yaBorradoHoy.comida){
+      console.log("WEB: Borrando turno comida...");
+      await borrarTurnoCompleto("comida");
+      yaBorradoHoy.comida = true;
+      yaBorradoHoy.cena = false;
+    }
 
-  if((horas === 16 && minutos === 30) || (horas === 23 && minutos === 30)){
-    console.log("Borrando todas las ofertas...");
-    db.collection("anuncios").get().then(snapshot => {
-      snapshot.forEach(doc => {
-        db.collection("anuncios").doc(doc.id).delete();
-      })
-    }).then(() => {
-      console.log("Borrado completo");
-    });
-  }
+    if(horas === 23 && minutos === 30 && !yaBorradoHoy.cena){
+      console.log("WEB: Borrando turno cena...");
+      await borrarTurnoCompleto("cena");
+      yaBorradoHoy.cena = true;
+      yaBorradoHoy.comida = false;
+    }
+    
+    if(horas === 0 && minutos === 1){
+      yaBorradoHoy = {comida: false, cena: false};
+    }
+  }, 1000 * 60);
 }
 
-// Revisar cada minuto
-setInterval(programarBorrado, 1000 * 60);
+async function borrarTurnoCompleto(turnoABorrar){
+  const snapshot = await db.collection("anuncios").where("turno", "==", turnoABorrar).get();
+  const batch = db.batch();
+  snapshot.forEach(doc => {
+    if(doc.data().imagenUrl){
+      const imageRef = storage.refFromURL(doc.data().imagenUrl);
+      imageRef.delete().catch(()=>{});
+    }
+    batch.delete(doc.ref);
+  });
+  await batch.commit();
+  document.getElementById('debug').innerText = `Borrado automático: ${turnoABorrar} limpiado a las ${new Date().toLocaleTimeString()}`;
+}
+
+iniciarBorradoAutomatico(); // Arranca al cargar la web
 
 function pintar(anuncios){
   const lista=document.getElementById('listaAnuncios');
@@ -119,7 +126,7 @@ function pintar(anuncios){
   const t=getTurno();
   const filtrados = anuncios.filter(a => a.turno && a.turno.toLowerCase() === t);
 
-  debug.innerText = `Total ofertas en BD: ${anuncios.length} | Ofertas para ${t}: ${filtrados.length}`;
+  debug.innerText = `Total: ${anuncios.length} | Para ${t}: ${filtrados.length}`;
 
   if(filtrados.length===0){
     lista.innerHTML="<p style='text-align:center'>No hay ofertas para "+t+" ahora</p>";
@@ -127,26 +134,21 @@ function pintar(anuncios){
   }
 
   lista.innerHTML = filtrados.map((a,i)=>{
-    const precio = extraerPrecio(a.texto);
-    const textoSinPrecio = a.texto.replace(/\d+[,.]?\d*\s*€/,'').trim();
-    const icono = getIcono(a.texto);
     const tel = a.telefono? a.telefono.replace(/\D/g,'') : '';
+    const esPrimero = i===0;
     
-    return `
-    <div class="card ${i===0?'amarilla':'blanca'}">
-      ${i===0?'<div class="cinta">Recomendado<br>Menuplus</div>':''}
-      <h3>${a.bar.toUpperCase()}</h3>
-      <div class="card-content">
-        <div class="icono">${icono}</div>
-        <div class="info">
-          <div class="label">Oferta de hoy:</div>
-          <div class="titulo-oferta">${textoSinPrecio}</div>
-          <div class="precio">${precio}<small>€</small></div>
-          ${tel? `<a href="tel:${tel}" class="btn-llamar">📞 Llamar y Reservar</a>` : ''}
-        </div>
-      </div>
-    </div>
-  `}).join('');
+    let contenido = '';
+    if(a.imagenUrl){
+      contenido = `<img src="${a.imagenUrl}" class="card-img" alt="Oferta de ${a.bar}">`;
+    } else if(a.texto){
+      const precio = a.texto.match(/(\d+[,.]?\d*)\s*€/)?.[1] || '';
+      const textoSinPrecio = a.texto.replace(/\d+[,.]?\d*\s*€/,'').trim();
+      const icono = a.texto.toLowerCase().includes('sushi') ? '🍣' : a.texto.toLowerCase().includes('menu') ? '🍴' : '🍽️';
+      contenido = `<div class="card-body"><h3>${a.bar.toUpperCase()}</h3><div class="card-content"><div class="icono">${icono}</div><div class="info"><div class="label">Oferta de hoy:</div><div class="titulo-oferta">${textoSinPrecio}</div>${precio ? `<div class="precio">${precio}<small>€</small></div>` : ''}${tel? `<a href="tel:${tel}" class="btn-llamar">📞 Llamar y Reservar</a>` : ''}</div></div></div>`;
+    }
+
+    return `<div class="card ${esPrimero?'amarilla':'blanca'}">${esPrimero?'<div class="cinta">Recomendado<br>Menuplus</div>':''}${contenido}${a.imagenUrl && tel ? `<div class="card-body"><a href="tel:${tel}" class="btn-llamar">📞 Llamar y Reservar</a></div>` : ''}</div>`;
+  }).join('');
 }
 
 db.collection("anuncios").onSnapshot(snapshot=>{
