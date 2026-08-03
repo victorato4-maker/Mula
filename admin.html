@@ -17,7 +17,7 @@
 <button onclick="login()" class="w-full btn-yellow font-bold py-2 rounded">Entrar / Registrarse</button>
 </div>
 <div id="panel" class="hidden max-w-2xl mx-auto mt-10 p-6">
-<h1 class="text-3xl font-bold">Hola <span id="barName"></span></h1>
+<h1 class="text-3xl font-bold text-center">Hola <span id="barName"></span></h1>
 <p id="status" class="mb-4"></p>
 <div id="formulario" class="bg-white text-black p-6 rounded-lg">
 <label class="font-bold">Escribe tu menú o oferta:</label>
@@ -46,7 +46,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig); const auth=firebase.auth(); const db=firebase.firestore(); let userId=null;
 function getTurno(){const h=new Date().getHours()+new Date().getMinutes()/60; if(h>=8&&h<16)return"comida"; if(h>=16&&h<23.5)return"cena"; return"cerrado";}
-function actualizarUI(){const t=getTurno(); const btn=document.getElementById('btnPublicar'); const btnBorrar=document.getElementById('btnBorrar'); const form=document.getElementById('formulario'); const status=document.getElementById('status'); if(t==="cerrado"){form.style.display='none'; status.innerText="cerrado: vuelve a partir de las ocho"; status.style.background="#FFD700"; status.style.color="#003366"; status.style.fontSize="22px"; status.style.fontWeight="bold"; status.style.padding="20px"; status.style.textAlign="center"; status.style.borderRadius="8px"}else{form.style.display='block'; btn.innerText=`PUBLICAR MENÚ DE ${t.toUpperCase()}`; status.innerText=`Horario activo: ${t}`; status.style.background=""; status.style.color=""; status.style.fontSize=""; status.style.padding=""}}
+function actualizarUI(){const t=getTurno(); const btn=document.getElementById('btnPublicar'); const btnBorrar=document.getElementById('btnBorrar'); const form=document.getElementById('formulario'); const status=document.getElementById('status'); if(t==="cerrado"){form.style.display='none'; status.innerText="CERRADO: VUELVE A PARTIR DE LAS 8:00"; status.style.background="#FFC700"; status.style.color="#0A2540"; status.style.fontSize="28px"; status.style.fontWeight="bold"; status.style.padding="30px"; status.style.textAlign="center"; status.style.borderRadius="12px"; status.style.margin="40px auto"; status.style.maxWidth="600px"}else{form.style.display='block'; btn.innerText=`PUBLICAR MENÚ DE ${t.toUpperCase()}`; status.innerText=`Horario activo: ${t}`; status.style.background=""; status.style.color=""; status.style.fontSize=""; status.style.padding=""; status.style.margin=""}}
 async function publicar(){const texto=document.getElementById('textoMenu').value; const t=getTurno(); if(!texto)return alert("Escribe algo"); if(t==="cerrado")return alert("Fuera de horario"); await db.collection("anuncios").doc(userId).delete(); await db.collection("anuncios").doc(userId).set({bar:auth.currentUser.email,texto:texto,turno:t,timestamp:new Date(),expira:t==="comida"?"16:00":"23:30"}); document.getElementById('textoEnImagen').innerText=texto; document.getElementById('vistaPrevia').classList.remove('hidden'); alert("¡Publicado!")}
 async function borrar(){await db.collection("anuncios").doc(userId).delete(); alert("Borrado")}
 function descargarImagen(){html2canvas(document.getElementById('plantilla')).then(c=>{const a=document.createElement('a'); a.download='menu-menuplus.png'; a.href=c.toDataURL(); a.click()})}
