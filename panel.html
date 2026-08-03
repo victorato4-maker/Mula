@@ -57,10 +57,10 @@ if(horaActual < 8 || horaActual >= 23.5){
   auth.signOut(); 
 } 
 else if(horaActual >= 8 && horaActual < 16){
-    turnoActual = "Comida 8:00 - 16:00";
+    turnoActual = "comida";
 } 
 else if(horaActual >= 16 && horaActual < 23.5){
-    turnoActual = "Cena 16:00 - 23:30";
+    turnoActual = "cena";
 }
 
 // 2. SOLO SI NO ESTA BLOQUEADO CARGAMOS EL PANEL
@@ -89,12 +89,12 @@ document.getElementById('app').innerHTML = `
     </div>
 </div>`;
 
-// BORRAR OFERTAS VIEJAS
-db.collection("ofertas").get().then(snapshot => {
+// BORRAR ANUNCIOS VIEJOS DEL TURNO ANTERIOR
+db.collection("anuncios").get().then(snapshot => {
     snapshot.forEach(doc => {
         const data = doc.data();
         if(data.turno !== turnoActual){
-            db.collection("ofertas").doc(doc.id).delete();
+            db.collection("anuncios").doc(doc.id).delete();
         }
     })
 })
@@ -110,13 +110,17 @@ auth.onAuthStateChanged(user => {
 })
 }
 
-// 3. FUNCIONES QUE FALTABAN
+// 3. FUNCIONES
 function entrar(){
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   auth.signInWithEmailAndPassword(email, password)
-  .catch(() => {
-    auth.createUserWithEmailAndPassword(email, password);
+  .catch((error) => {
+    if(error.code === 'auth/user-not-found'){
+      auth.createUserWithEmailAndPassword(email, password);
+    } else {
+      alert(error.message);
+    }
   });
 }
 
@@ -125,15 +129,19 @@ function publicar(){
   btn.disabled = true;
   btn.innerText = "Publicando...";
   
-  db.collection("ofertas").add({
+  db.collection("anuncios").add({
     bar: document.getElementById('barNombre').value,
     telefono: document.getElementById('barTelefono').value,
-    menu: document.getElementById('menu').value,
+    texto: document.getElementById('menu').value,
     turno: turnoActual,
-    fecha: new Date()
+    fecha: new Date().toLocaleString('es-ES')
   }).then(() => {
     alert("¡Oferta publicada con éxito!");
     document.getElementById('menu').value = "";
+    btn.disabled = false;
+    btn.innerText = "Publicar Oferta";
+  }).catch((error) => {
+    alert("Error: " + error.message);
     btn.disabled = false;
     btn.innerText = "Publicar Oferta";
   });
