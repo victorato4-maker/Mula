@@ -20,17 +20,16 @@ button:hover{opacity:.9}
 .plato-input input{margin:0}
 .plato-input button{width:45px;padding:0;background:#c00;color:#fff}
 #preview{margin-top:20px;text-align:center}
-#preview canvas{width:100%!important;height:auto!important;border:4px solid #FFC300;border-radius:12px}
+#preview canvas{width:100%!important;height:auto!important;border:4px solid #FFC300;border-radius:12px;cursor:pointer}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="container">
-<h1>🍽️ Panel MenuPlus</h1>
+<h1>🍽️ Panel MenuPlus GRATIS</h1>
 
 <div id="auth">
   <input id="email" type="email" placeholder="Correo del bar">
@@ -39,7 +38,7 @@ button:hover{opacity:.9}
     <input id="nombreBar" placeholder="Nombre del Bar">
     <input id="telefono" placeholder="Teléfono">
   </div>
-  <button onclick="mostrarRegistro()">Registrarse</button>
+  <button onclick="registrar()">Registrarse</button>
   <button onclick="login()">Entrar</button>
   <p id="authMsg" style="color:#c00"></p>
 </div>
@@ -79,9 +78,10 @@ button:hover{opacity:.9}
     </div>
   </div>
 
-  <button onclick="publicar()">Publicar Ahora</button>
+  <button onclick="publicar()">1. Generar Imagen</button>
+  <button onclick="guardarDB()" id="btnGuardar" class="hidden">2. Publicar en la Web</button>
   <p id="msg"></p>
-  <div id="preview"></div>
+  <div id="preview"><p>Pulsa "Generar Imagen" y luego dale a descargar</p></div>
 </div>
 </div>
 
@@ -97,11 +97,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
-const storage=firebase.storage();
 
 let tipoActual='oferta';
 let nombreBar='';
 let contadores={primeros:0,segundos:0,postres:0};
+let datosParaGuardar=null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -122,6 +122,19 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
+function registrar(){ /* igual que antes */
+  const e=document.getElementById('email').value;
+  const p=document.getElementById('pass').value;
+  const n=document.getElementById('nombreBar').value;
+  const t=document.getElementById('telefono').value;
+  if(!n ||!t) return alert('Rellena nombre y teléfono');
+  auth.createUserWithEmailAndPassword(e,p).then(cred=>{
+    db.collection('bares').doc(cred.user.uid).set({nombre:n,telefono:t,email:e});
+    document.getElementById('authMsg').innerText='Registrado. Ya puedes entrar';
+  }).catch(err=>document.getElementById('authMsg').innerText=err.message);
+}
+function login(){ auth.signInWithEmailAndPassword(document.getElementById('email').value,document.getElementById('pass').value).catch(err=>document.getElementById('authMsg').innerText=err.message); }
+function logout(){auth.signOut()}
 function mostrarRegistro(){document.getElementById('extraCampos').classList.remove('hidden');}
 function setTipo(t){
   tipoActual=t;
@@ -144,24 +157,24 @@ function getPlatos(tipo){
   });
   return platos;
 }
-function login(){
-  auth.signInWithEmailAndPassword(document.getElementById('email').value,document.getElementById('pass').value)
-.catch(err=>document.getElementById('authMsg').innerText=err.message);
-}
-function registrar(){
-  const e=document.getElementById('email').value;
-  const p=document.getElementById('pass').value;
-  const n=document.getElementById('nombreBar').value;
-  const t=document.getElementById('telefono').value;
-  if(!n ||!t) return alert('Rellena nombre y teléfono');
-  auth.createUserWithEmailAndPassword(e,p).then(cred=>{
-    db.collection('bares').doc(cred.user.uid).set({nombre:n,telefono:t,email:e});
-    document.getElementById('authMsg').innerText='Registrado. Ya puedes entrar';
-  }).catch(err=>document.getElementById('authMsg').innerText=err.message);
-}
-function logout(){auth.signOut()}
 
-async function generarImagen(datos){
+async function publicar(){
+  let datos={bar:nombreBar,tipo:tipoActual};
+  if(tipoActual==='oferta'){
+    datos.texto=document.getElementById('textoOferta').value;
+    if(!datos.texto)return alert('Escribe la oferta');
+  } else {
+    datos.precio=document.getElementById('precio').value;
+    datos.primeros=getPlatos('primeros');
+    datos.segundos=getPlatos('segundos');
+    datos.postres=getPlatos('postres');
+    datos.incluyeEnsalada=document.getElementById('ensalada').checked;
+    datos.incluyeCafe=document.getElementById('cafe').checked;
+    if(!datos.precio || datos.primeros.length===0 || datos.segundos.length===0)return alert('Falta precio o platos');
+  }
+  datosParaGuardar = datos;
+
+  document.getElementById('msg').innerText='Generando imagen...';
   const div = document.createElement('div');
   div.style.width = '1080px';
   div.style.height = '1350px';
@@ -194,48 +207,43 @@ async function generarImagen(datos){
   document.body.appendChild(div);
   const canvas = await html2canvas(div, {scale: 1});
   document.body.removeChild(div);
-  document.getElementById('preview').innerHTML='<h3>Vista Previa:</h3>';
+
+  document.getElementById('preview').innerHTML='<h3>Descarga esta imagen y súbela a WhatsApp:</h3>';
   document.getElementById('preview').appendChild(canvas);
-  return new Promise(resolve => {
-    canvas.toBlob(async (blob)=>{
-      const ref = storage.ref(`publicaciones/${Date.now()}.png`);
-      await ref.put(blob);
-      resolve(await ref.getDownloadURL());
-    }, 'image/png');
-  });
+
+  const link = document.createElement('a');
+  link.download = 'MenuPlus_'+nombreBar+'.png';
+  link.href = canvas.toDataURL();
+  link.innerText = 'DESCARGAR IMAGEN';
+  link.style.display='block';
+  link.style.background='#28a745';
+  link.style.color='#fff';
+  link.style.padding='15px';
+  link.style.borderRadius='8px';
+  link.style.textAlign='center';
+  link.style.fontWeight='800';
+  link.style.marginTop='10px';
+  document.getElementById('preview').appendChild(link);
+
+  document.getElementById('btnGuardar').classList.remove('hidden');
+  document.getElementById('msg').innerText='✅ Imagen lista. Ahora pulsa el botón 2 para que salga en la web';
 }
 
-async function publicar(){
-  let datos={bar:nombreBar,tipo:tipoActual};
-  if(tipoActual==='oferta'){
-    datos.texto=document.getElementById('textoOferta').value;
-    if(!datos.texto)return alert('Escribe la oferta');
-  } else {
-    datos.precio=document.getElementById('precio').value;
-    datos.primeros=getPlatos('primeros');
-    datos.segundos=getPlatos('segundos');
-    datos.postres=getPlatos('postres');
-    datos.incluyeEnsalada=document.getElementById('ensalada').checked;
-    datos.incluyeCafe=document.getElementById('cafe').checked;
-    if(!datos.precio || datos.primeros.length===0 || datos.segundos.length===0)return alert('Falta precio o platos');
-  }
-
-  document.getElementById('msg').innerText='Publicando...';
-  const urlImagen=await generarImagen(datos);
-
+async function guardarDB(){
+  if(!datosParaGuardar) return;
   await db.collection("anuncios").add({
-    bar: nombreBar,
+    bar: datosParaGuardar.bar,
     turno: new Date().getHours()<16? "comida" : "cena",
-    tipo: tipoActual,
-    imagenUrl: urlImagen,
-    precio: datos.precio || "Ver",
-    textoOferta: datos.texto || "",
-    incluyeEnsalada: datos.incluyeEnsalada || false,
-    incluyeCafe: datos.incluyeCafe || false,
+    tipo: datosParaGuardar.tipo,
+    precio: datosParaGuardar.precio || "Ver",
+    textoOferta: datosParaGuardar.texto || "",
+    incluyeEnsalada: datosParaGuardar.incluyeEnsalada || false,
+    incluyeCafe: datosParaGuardar.incluyeCafe || false,
+    imagenUrl: "", // Ya no guardamos imagen
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
-
-  document.getElementById('msg').innerText='✅ Publicado! Recarga menuplus.es';
+  document.getElementById('msg').innerText='✅ Publicado en la web! Recarga menuplus.es';
+  document.getElementById('btnGuardar').classList.add('hidden');
 }
 </script>
 </body>
