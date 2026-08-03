@@ -17,7 +17,7 @@ header h1{color:#FFC300;margin:10px 0 5px}
 .precio{font-size:40px;font-weight:bold;color:#002F6C;margin:10px 0}
 .botones{margin-top:10px}
 .botones a{margin-right:15px;text-decoration:none;color:#002F6C;font-weight:bold}
-.btn{background:#FFC300;color:#002F6C;padding:14px;border:none;border-radius:10px;width:100%;font-weight:bold;font-size:16px}
+.btn{background:#FFC300;color:#002F6C;padding:14px;border:none;border-radius:10px;width:100%;font-weight:bold;font-size:16px;cursor:pointer}
 footer{background:#002F6C;padding:12px;display:flex;justify-content:space-around;position:fixed;bottom:0;width:100%;left:0}
 footer div{color:#fff;text-align:center;font-size:12px}
 #cerradoCartel{background:#FFC700;color:#0A2540;font-size:28px;font-weight:bold;padding:30px;text-align:center;border-radius:12px;margin:40px auto;max-width:600px}
@@ -38,7 +38,7 @@ footer div{color:#fff;text-align:center;font-size:12px}
 
 <div style="border:2px solid #FFC300;padding:20px;border-radius:16px;margin-top:30px;text-align:center">
 <h3>¿Eres dueño de un bar en Mula?</h3>
-<button class="btn" onclick="window.open('https://wa.me/34684228068?text=Hola%20MenuPlus')">Publica tu oferta aquí</button>
+<button class="btn" onclick="window.location.href='admin.html'">Publica tu oferta aquí</button>
 </div>
 </div>
 
@@ -73,7 +73,6 @@ function pintar(anuncios){
   }
   cartel.style.display="none";
   
-  // Solo mostrar anuncios del turno actual
   const filtrados = anuncios.filter(a => a.turno === t);
   
   if(filtrados.length===0){
@@ -100,7 +99,7 @@ db.collection("anuncios").onSnapshot(snapshot=>{
 });
 
 document.getElementById('fecha').innerText="Actualizado hoy, "+new Date().toLocaleDateString('es-ES');
-setInterval(()=>location.reload(),60000); // se actualiza cada minuto
+setInterval(()=>location.reload(),60000);
 </script>
 </body>
 </html>
