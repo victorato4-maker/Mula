@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Bar - MenuPlus</title>
+<style>body{font-family:Arial;background:#002F6C;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}.box{background:#fff;padding:25px;border-radius:16px;width:90%;max-width:400px}h2{text-align:center;color:#002F6C}input,textarea,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}button{background:#FFC300;color:#002F6C;border:none;padding:14px;border-radius:10px;width:100%;font-weight:bold;font-size:16px;cursor:pointer;margin-top:10px}label{font-size:13px;color:#555;font-weight:bold}#panel{display:none}small{color:#777}</style>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div class="box" id="loginBox">
+<h2>MenuPlus - Panel Bar v2</h2>
+<input id="email" type="email" placeholder="Email del bar">
+<input id="password" type="password" placeholder="Contraseña">
+<button onclick="entrar()">Entrar / Registrarse</button>
+</div>
+
+<div class="box" id="panel">
+<h2>Publicar Menú de Hoy</h2>
+<label>Nombre del Bar</label><input id="bar">
+<label>Teléfono WhatsApp</label><input id="barTelefono" type="tel">
+<label>Turno</label><select id="turno"><option value="comida">Comida 8:00 - 16:00</option><option value="cena">Cena 16:00 - 23:30</option></select>
+<label>Menú del día</label><textarea id="texto" rows="6"></textarea>
+<button onclick="publicar()">Publicar Oferta</button>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",
+  authDomain: "menuplus-mula.firebaseapp.com",
+  projectId: "menuplus-mula",
+  storageBucket: "menuplus-mula.firebasestorage.app",
+  messagingSenderId: "90841339782",
+  appId: "1:90841339782:web:267a5bfb0c8338882a7e07"
+};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+let usuarioActual="";
+
+function entrar(){
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('password').value;
+  alert("1. Botón funciona"); // <- SI NO SALE ESTO, ES CACHÉ
+  if(!email||!pass){alert("Pon email y contraseña");return}
+
+  db.collection("bares").doc(email).get().then(doc=>{
+    alert("2. Conectó con Firebase"); // <- SI NO SALE ESTO, ES FIREBASE
+    if(doc.exists){
+      if(doc.data().pass!== pass){alert("Contraseña incorrecta");return}
+      usuarioActual=email;
+      document.getElementById('barTelefono').value = doc.data().telefono || "";
+      document.getElementById('bar').value = doc.data().nombre || email.split('@')[0];
+      alert("3. Entrando al panel");
+    }else{
+      db.collection("bares").doc(email).set({pass:pass, telefono:"", nombre:""})
+      usuarioActual=email;
+      alert("3. Registrado nuevo");
+    }
+    document.getElementById('loginBox').style.display="none";
+    document.getElementById('panel').style.display="block";
+  }).catch(err=>alert("ERROR: "+err.message))
+}
+
+function publicar(){
+  const bar=document.getElementById('bar').value;
+  const tel=document.getElementById('barTelefono').value;
+  const turno=document.getElementById('turno').value;
+  const texto=document.getElementById('texto').value;
+  if(!bar||!texto){alert("Completa bar y menú");return}
+  db.collection("bares").doc(usuarioActual).update({telefono: tel, nombre: bar});
+  db.collection("anuncios").add({bar: bar+"@"+usuarioActual, telefono: tel, turno:turno, texto:texto, fecha:new Date().toLocaleDateString()}).then(()=>alert("¡Publicado!"))
+}
+</script>
+</body>
+</html>
