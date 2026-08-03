@@ -3,80 +3,111 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Bar</title>
+<title>MenuPlus - Panel Bar</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <style>
-body{font-family:Arial;background:#002F6C;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.box{background:#fff;padding:25px;border-radius:16px;width:90%;max-width:400px}
-h2{text-align:center;color:#002F6C}
-input,textarea,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
-button{background:#FFC300;color:#002F6C;border:none;padding:14px;border-radius:10px;width:100%;font-weight:bold;font-size:16px;cursor:pointer;margin-top:10px}
-label{font-size:13px;color:#555;font-weight:bold}
-#panel{display:none}
+    body { font-family: Arial; background: #002F6C; color: white; padding: 20px; margin: 0; }
+    .container { max-width: 500px; margin: auto; background: white; color: #333; padding: 20px; border-radius: 10px; }
+    h1 { color: #002F6C; text-align: center; }
+    input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { width: 100%; padding: 15px; background: #FFC107; color: #002F6C; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; }
+    label { font-weight: bold; font-size: 14px; }
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-<div class="box" id="loginBox">
-<h2>MenuPlus - Panel Bar</h2>
-<input id="email" type="email" placeholder="Email del bar">
-<input id="password" type="password" placeholder="Contraseña">
-<button onclick="entrar()">Entrar / Registrarse</button>
+<div class="container" id="app">
+    <h1>Publicar Menú de Hoy</h1>
+    <div id="login-box">
+        <input type="email" id="email" placeholder="Email del bar">
+        <input type="password" id="password" placeholder="Contraseña">
+        <button onclick="entrar()">Entrar / Registrarse</button>
+    </div>
+    <div id="panel-box" style="display:none">
+        <p>Bienvenido: <b id="userEmail"></b></p>
+        <label>Nombre del Bar</label>
+        <input type="text" id="barNombre">
+        <label>Teléfono WhatsApp</label>
+        <input type="tel" id="barTelefono">
+        <label>Turno</label>
+        <select id="turno">
+            <option>Comida 8:00 - 16:00</option>
+            <option>Cena 20:00 - 23:30</option>
+        </select>
+        <label>Menú del día</label>
+        <textarea id="menu" rows="6" placeholder="1º Plato... 2º Plato... Postre... Precio"></textarea>
+        <button onclick="publicar()">Publicar Oferta</button>
+    </div>
 </div>
-<div class="box" id="panel">
-<h2>Publicar Menú de Hoy</h2>
-<label>Nombre del Bar</label>
-<input id="bar">
-<label>Teléfono WhatsApp</label>
-<input id="barTelefono" type="tel">
-<label>Turno</label>
-<select id="turno">
-<option value="comida">Comida 8:00 - 16:00</option>
-<option value="cena">Cena 16:00 - 23:30</option>
-</select>
-<label>Menú del día</label>
-<textarea id="texto" rows="6"></textarea>
-<button onclick="publicar()">Publicar Oferta</button>
-</div>
+
 <script>
+// BLOQUEO DE HORARIO: de 23:30 a 8:00 cerrado
+const ahora = new Date();
+const hora = ahora.getHours();
+const minutos = ahora.getMinutes();
+const horaActual = hora + minutos/60;
+
+if(horaActual < 8 || horaActual >= 23.5){
+  document.getElementById('app').innerHTML = `
+  <div style="text-align:center;padding:40px">
+    <h1>🔒 Panel Cerrado</h1>
+    <h2>Vuelve a partir de las 8:00</h2>
+    <p>El horario para publicar es de 8:00 a 23:30</p>
+  </div>`;
+}
+
+// TU CONFIG DE FIREBASE
 const firebaseConfig = {
-apiKey: "AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",
-authDomain: "menuplus-mula.firebaseapp.com",
-projectId: "menuplus-mula",
-storageBucket: "menuplus-mula.firebasestorage.app",
-messagingSenderId: "90841339782",
-appId: "1:90841339782:web:267a5bfb0c8338882a7e07"
+  apiKey: "AIzaSyBvLxYqK8mN9pR3sT7uV2wX4zA6cE1gH5j",
+  authDomain: "menuplus-mula.firebaseapp.com",
+  projectId: "menuplus-mula",
+  storageBucket: "menuplus-mula.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-let usuarioActual="";
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// SI YA ESTA LOGUEADO
+auth.onAuthStateChanged(user => {
+  if(user){
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('panel-box').style.display = 'block';
+    document.getElementById('userEmail').innerText = user.email;
+  }
+});
+
 function entrar(){
-const email=document.getElementById('email').value;
-const pass=document.getElementById('password').value;
-if(!email||!pass){alert("Pon email y contraseña");return}
-db.collection("bares").doc(email).get().then(doc=>{
-if(doc.exists){
-if(doc.data().pass!== pass){alert("Contraseña incorrecta");return}
-usuarioActual=email;
-document.getElementById('barTelefono').value = doc.data().telefono || "";
-document.getElementById('bar').value = doc.data().nombre || email.split('@')[0];
-}else{
-db.collection("bares").doc(email).set({pass:pass, telefono:"", nombre:""})
-usuarioActual=email;
-alert("Registrado correctamente")
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('password').value;
+    auth.createUserWithEmailAndPassword(email, pass)
+    .then(() => alert("Registrado correctamente"))
+    .catch(() => {
+        auth.signInWithEmailAndPassword(email, pass)
+        .then(() => alert("Bienvenido de nuevo"))
+        .catch(e => alert("Error: " + e.message))
+    })
 }
-document.getElementById('loginBox').style.display="none";
-document.getElementById('panel').style.display="block";
-}).catch(err=>alert("ERROR: "+err.message))
-}
+
 function publicar(){
-const bar=document.getElementById('bar').value;
-const tel=document.getElementById('barTelefono').value;
-const turno=document.getElementById('turno').value;
-const texto=document.getElementById('texto').value;
-if(!bar||!texto){alert("Completa bar y menú");return}
-db.collection("bares").doc(usuarioActual).update({telefono: tel, nombre: bar});
-db.collection("anuncios").add({bar: bar+"@"+usuarioActual, telefono: tel, turno:turno, texto:texto, fecha:new Date().toLocaleDateString()}).then(()=>alert("¡Publicado!"))
+    const user = auth.currentUser;
+    if(!user) return alert("Inicia sesión primero");
+    
+    db.collection("ofertas").add({
+        barId: user.uid,
+        email: user.email,
+        nombre: document.getElementById('barNombre').value,
+        telefono: document.getElementById('barTelefono').value,
+        turno: document.getElementById('turno').value,
+        menu: document.getElementById('menu').value,
+        fecha: new Date().toLocaleDateString('es-ES'),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        alert("¡Oferta publicada!");
+        document.getElementById('menu').value = "";
+    }).catch(e => alert("Error al publicar: " + e.message));
 }
 </script>
 </body>
