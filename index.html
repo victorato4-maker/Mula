@@ -5,46 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MenuPlus Mula</title>
 <style>
-body{margin:0;font-family:Arial;background:#fff;color:#002F6C}
-header{background:#002F6C;padding:15px 20px;color:#fff;display:flex;align-items:center;gap:10px}
-header h1{color:#FFC300;margin:0;font-size:22px}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial;background:#F8F9FA;color:#002F6C;padding-bottom:80px}
+header{background:#002F6C;padding:18px 20px;color:#fff}
+header h1{color:#FFC300;margin:0;font-size:24px;font-weight:800}
 header h1 span{color:#fff}
-.container{padding:20px;max-width:650px;margin:auto}
-.container h2{font-size:28px;margin:10px 0 5px}
-.container p.sub{color:#555;margin:0 0 20px;font-size:14px}
 
-.card{border-radius:16px;padding:20px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,.08);position:relative}
+.debug-bar{background:#002F6C;color:#FFC300;padding:10px;text-align:center;font-weight:700;font-size:13px;border-bottom:3px solid #FFC300}
+
+.container{padding:20px;max-width:700px;margin:auto}
+.container h2{font-size:28px;margin:15px 0 5px;font-weight:800}
+.container p.sub{color:#666;margin:0 0 25px;font-size:14px}
+
+.card{border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative}
 .amarilla{background:#FFC300}
-.blanca{background:#fff;border:1px solid #eee}
+.blanca{background:#fff}
 
-.cinta{position:absolute;top:0;right:20px;background:#002F6C;color:#fff;padding:6px 12px;border-radius:0 0 8px 8px;font-size:11px;font-weight:bold}
+.cinta{position:absolute;top:0;right:16px;background:#002F6C;color:#FFC300;padding:5px 12px;border-radius:0 0 8px 8px;font-size:11px;font-weight:700;text-align:center;line-height:1.3}
 
-.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-.card-header h3{margin:0;font-size:24px;color:#002F6C}
-.icono{font-size:32px}
+.card h3{margin:0 0 12px;font-size:22px;color:#002F6C;font-weight:800}
+.card-content{display:flex;gap:15px;align-items:center}
+.icono{font-size:40px;flex-shrink:0}
 
-.precio-box{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
-.precio-box.label{font-size:14px;font-weight:bold}
-.precio{font-size:48px;font-weight:bold;color:#002F6C;line-height:1}
-.precio small{font-size:24px}
+.info{flex:1}
+.label{font-size:13px;font-weight:600;margin-bottom:4px}
+.titulo-oferta{font-size:15px;margin-bottom:8px;color:#333}
+.precio{font-size:52px;font-weight:800;color:#002F6C;line-height:1}
+.precio small{font-size:26px}
 
-.desc{font-size:13px;color:#333;margin-bottom:12px}
-.horario{font-size:13px;font-weight:bold;display:flex;align-items:center;gap:6px}
-.horario.dot{width:8px;height:8px;border-radius:50%;background:#22C55E}
-.horario.cerrado.dot{background:#EF4444}
+.horario{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;margin-top:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#22C55E}
 
-.footer-nav{position:fixed;bottom:0;left:0;right:0;background:#002F6C;display:flex;justify-content:space-around;padding:10px 0;color:#fff}
-.footer-nav div{text-align:center;font-size:12px}
-.footer-nav.active{background:#FFC300;color:#002F6C;padding:5px 15px;border-radius:8px;font-weight:bold}
-body{padding-bottom:70px}
+.footer-nav{position:fixed;bottom:0;left:0;right:0;background:#002F6C;display:flex;justify-content:space-around;padding:8px 0;color:#fff}
+.footer-nav div{text-align:center;font-size:11px;opacity:.7}
+.footer-nav.active{opacity:1}
+.footer-nav.active span{background:#FFC300;color:#002F6C;padding:4px 14px;border-radius:8px;font-weight:700}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-<header>
-<h1>Menuplus <span>Mula</span></h1>
-</header>
+<header><h1>Menuplus <span>Mula</span></h1></header>
+
+<div id="debug" class="debug-bar">Cargando ofertas...</div>
 
 <div class="container">
 <h2>Bares en Mula</h2>
@@ -53,7 +56,7 @@ body{padding-bottom:70px}
 </div>
 
 <div class="footer-nav">
-<div class="active">🏠<br>Inicio</div>
+<div class="active"><span>🏠<br>Inicio</span></div>
 <div>🔍<br>Buscar</div>
 <div>📤<br>Compartir</div>
 </div>
@@ -77,16 +80,14 @@ function getTurno(){
   return"cerrado";
 }
 
-// Sacar precio del texto. Ej: "15€" o "25€"
 function extraerPrecio(texto){
   const match = texto.match(/(\d+[,.]?\d*)\s*€/);
   return match? match[1] : '';
 }
-// Sacar icono según palabra
 function getIcono(texto){
   texto = texto.toLowerCase();
   if(texto.includes('sushi')) return '🍣';
-  if(texto.includes('menu') || texto.includes('plato')) return '🍴';
+  if(texto.includes('menu') || texto.includes('plato') || texto.includes('bandeja')) return '🍴';
   if(texto.includes('tapa') || texto.includes('caña') || texto.includes('cerveza')) return '🍺';
   if(texto.includes('vino')) return '🍷';
   return '🍽️';
@@ -94,9 +95,11 @@ function getIcono(texto){
 
 function pintar(anuncios){
   const lista=document.getElementById('listaAnuncios');
+  const debug=document.getElementById('debug');
   const t=getTurno();
-  
   const filtrados = anuncios.filter(a => a.turno && a.turno.toLowerCase() === t);
+  
+  debug.innerText = `Total ofertas en BD: ${anuncios.length} | Ofertas para ${t}: ${filtrados.length}`;
   
   if(filtrados.length===0){
     lista.innerHTML="<p style='text-align:center'>No hay ofertas para "+t+" ahora</p>";
@@ -110,22 +113,16 @@ function pintar(anuncios){
     return `
     <div class="card ${i===0?'amarilla':'blanca'}">
       ${i===0?'<div class="cinta">Recomendado<br>Menuplus</div>':''}
-      <div class="card-header">
-        <h3>${a.bar.toUpperCase()}</h3>
+      <h3>${a.bar.toUpperCase()}</h3>
+      <div class="card-content">
         <div class="icono">${icono}</div>
+        <div class="info">
+          <div class="label">Oferta de hoy:</div>
+          <div class="titulo-oferta">${textoSinPrecio}</div>
+          <div class="precio">${precio}<small>€</small></div>
+          <div class="horario"><span class="dot"></span> Abierto ahora • 13:00 - 00:00</div>
+        </div>
       </div>
-      
-      <div class="precio-box">
-        <span class="label">Oferta de hoy:</span>
-      </div>
-      <div class="precio-box">
-        <span class="label">${textoSinPrecio}</span>
-      </div>
-      <div class="precio">${precio}<small>€</small></div>
-      
-      <div class="desc">Primer plato + Segundo + Bebida + Postre</div>
-      
-      <div class="horario"><span class="dot"></span> Abierto ahora • 13:00 - 00:00</div>
     </div>
   `}).join('');
 }
