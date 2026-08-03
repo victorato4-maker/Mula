@@ -33,9 +33,6 @@ header h1 span{color:#fff}
 .precio{font-size:52px;font-weight:800;color:#002F6C;line-height:1}
 .precio small{font-size:26px}
 
-.horario{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;margin-top:12px}
-.dot{width:8px;height:8px;border-radius:50%;background:#22C55E}
-
 .footer-nav{position:fixed;bottom:0;left:0;right:0;background:#002F6C;display:flex;justify-content:space-around;padding:8px 0;color:#fff}
 .footer-nav div{text-align:center;font-size:11px;opacity:.7}
 .footer-nav.active{opacity:1}
@@ -70,13 +67,13 @@ const firebaseConfig = {
   messagingSenderId: "90841339782",
   appId: "1:90841339782:web:267a5bfb0c8338882a7e07"
 };
-firebase.initializeApp(firebaseConfig); 
+firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
 function getTurno(){
-  const h=new Date().getHours()+new Date().getMinutes()/60; 
-  if(h>=8&&h<16)return"comida"; 
-  if(h>=16&&h<23.5)return"cena"; 
+  const h=new Date().getHours()+new Date().getMinutes()/60;
+  if(h>=8&&h<16)return"comida";
+  if(h>=16&&h<23.5)return"cena";
   return"cerrado";
 }
 
@@ -98,14 +95,14 @@ function pintar(anuncios){
   const debug=document.getElementById('debug');
   const t=getTurno();
   const filtrados = anuncios.filter(a => a.turno && a.turno.toLowerCase() === t);
-  
+
   debug.innerText = `Total ofertas en BD: ${anuncios.length} | Ofertas para ${t}: ${filtrados.length}`;
-  
+
   if(filtrados.length===0){
     lista.innerHTML="<p style='text-align:center'>No hay ofertas para "+t+" ahora</p>";
     return;
   }
-  
+
   lista.innerHTML = filtrados.map((a,i)=>{
     const precio = extraerPrecio(a.texto);
     const textoSinPrecio = a.texto.replace(/\d+[,.]?\d*\s*€/,'').trim();
@@ -120,7 +117,6 @@ function pintar(anuncios){
           <div class="label">Oferta de hoy:</div>
           <div class="titulo-oferta">${textoSinPrecio}</div>
           <div class="precio">${precio}<small>€</small></div>
-          <div class="horario"><span class="dot"></span> Abierto ahora • 13:00 - 00:00</div>
         </div>
       </div>
     </div>
