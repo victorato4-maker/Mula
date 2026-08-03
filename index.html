@@ -46,13 +46,13 @@ header p{margin:0}
 <div style="border:2px solid #FFC300;padding:20px;border-radius:16px;margin-top:30px;text-align:center">
 <h3>¿Eres dueño de un bar en Mula?</h3>
 <p>Publica tu menú gratis cada día</p>
-<button class="btn" onclick="window.location.href='admin.html'">Publica tu oferta aquí</button>
+<button class="btn" onclick="window.location.href='panel.html'">Publica tu oferta aquí</button>
 </div>
 </div>
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",
+  apiKey: "AIzaSyCfKMgXwZqzH_v8D4ua5UHLeKIL-Z3iKog", // CLAVE NUEVA
   authDomain: "menuplus-mula.firebaseapp.com",
   projectId: "menuplus-mula",
   storageBucket: "menuplus-mula.firebasestorage.app",
@@ -108,7 +108,7 @@ function pintar(anuncios){
   lista.innerHTML = filtrados.map((a,i)=>{
     const txtColor = i===0 ? '#002F6C' : '#333';
     const webColor = i===0 ? '#002F6C' : '#FFC300';
-    const tel = a.telefono ? a.telefono.replace(/\D/g,'') : '34684228068'; // limpia el número
+    const tel = a.telefono ? a.telefono.replace(/\D/g,'') : '34684228068';
     return `
     <div id="plantilla-${i}" class="plantilla-captura card ${i===0?'amarilla':'blanca'}">
       ${i===0?'<div class="recomendado">RECOMENDADO MENUPLUS</div>':''}
