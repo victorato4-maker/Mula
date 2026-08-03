@@ -108,7 +108,8 @@ function pintar(anuncios){
   lista.innerHTML = filtrados.map((a,i)=>{
     const txtColor = i===0 ? '#002F6C' : '#333';
     const webColor = i===0 ? '#002F6C' : '#FFC300';
-    const tel = a.telefono ? a.telefono.replace(/\D/g,'') : '34684228068';
+    // Si no hay telefono, el boton ira a un 600000 por defecto
+    const tel = a.telefono ? a.telefono.replace(/\D/g,'') : '600000000';
     return `
     <div id="plantilla-${i}" class="plantilla-captura card ${i===0?'amarilla':'blanca'}">
       ${i===0?'<div class="recomendado">RECOMENDADO MENUPLUS</div>':''}
