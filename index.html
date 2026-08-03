@@ -5,26 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MenuPlus Mula</title>
 <style>
-body{margin:0;font-family:Arial;background:#F5F7FA;color:#002F6C;padding:0;}
-header{background:#002F6C;padding:20px;text-align:center;color:#fff}
-header img{width:100px;background:#FFC300;padding:10px;border-radius:10px}
-header h1{color:#FFC300;margin:10px 0 5px;font-size:28px}
+body{margin:0;font-family:Arial;background:#fff;color:#002F6C}
+header{background:#002F6C;padding:15px 20px;color:#fff;display:flex;align-items:center;gap:10px}
+header h1{color:#FFC300;margin:0;font-size:22px}
+header h1 span{color:#fff}
 .container{padding:20px;max-width:650px;margin:auto}
-.card{border-radius:16px;padding:18px;margin-bottom:8px;box-shadow:0 3px 10px rgba(0,0,0,.1);position:relative}
-.amarilla{background:#FFC300}.blanca{background:#fff;border:1px solid #eee}
-.recomendado{position:absolute;top:-10px;right:15px;background:#002F6C;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:bold}
-.plantilla-captura h3{text-align:center;font-size:24px}
-.plantilla-captura p{text-align:center;white-space:pre-line}
-.debug{background:red;color:#fff;padding:10px;text-align:center;font-weight:bold}
+.container h2{font-size:28px;margin:10px 0 5px}
+.container p.sub{color:#555;margin:0 0 20px;font-size:14px}
+
+.card{border-radius:16px;padding:20px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,.08);position:relative}
+.amarilla{background:#FFC300}
+.blanca{background:#fff;border:1px solid #eee}
+
+.cinta{position:absolute;top:0;right:20px;background:#002F6C;color:#fff;padding:6px 12px;border-radius:0 0 8px 8px;font-size:11px;font-weight:bold}
+
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.card-header h3{margin:0;font-size:24px;color:#002F6C}
+.icono{font-size:32px}
+
+.precio-box{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.precio-box.label{font-size:14px;font-weight:bold}
+.precio{font-size:48px;font-weight:bold;color:#002F6C;line-height:1}
+.precio small{font-size:24px}
+
+.desc{font-size:13px;color:#333;margin-bottom:12px}
+.horario{font-size:13px;font-weight:bold;display:flex;align-items:center;gap:6px}
+.horario.dot{width:8px;height:8px;border-radius:50%;background:#22C55E}
+.horario.cerrado.dot{background:#EF4444}
+
+.footer-nav{position:fixed;bottom:0;left:0;right:0;background:#002F6C;display:flex;justify-content:space-around;padding:10px 0;color:#fff}
+.footer-nav div{text-align:center;font-size:12px}
+.footer-nav.active{background:#FFC300;color:#002F6C;padding:5px 15px;border-radius:8px;font-weight:bold}
+body{padding-bottom:70px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-<header><img src="logo-menuplus.png"><h1>MenuPlus Mula</h1></header>
+<header>
+<h1>Menuplus <span>Mula</span></h1>
+</header>
+
 <div class="container">
-<div id="debug" class="debug">Cargando...</div>
+<h2>Bares en Mula</h2>
+<p class="sub" id="fecha">Descubre las mejores ofertas de hoy</p>
 <div id="listaAnuncios"></div>
+</div>
+
+<div class="footer-nav">
+<div class="active">🏠<br>Inicio</div>
+<div>🔍<br>Buscar</div>
+<div>📤<br>Compartir</div>
 </div>
 
 <script>
@@ -46,33 +77,66 @@ function getTurno(){
   return"cerrado";
 }
 
-const debug = document.getElementById('debug');
-const t = getTurno();
-debug.innerText = "Turno actual: " + t + ". Leyendo Firebase...";
+// Sacar precio del texto. Ej: "15€" o "25€"
+function extraerPrecio(texto){
+  const match = texto.match(/(\d+[,.]?\d*)\s*€/);
+  return match? match[1] : '';
+}
+// Sacar icono según palabra
+function getIcono(texto){
+  texto = texto.toLowerCase();
+  if(texto.includes('sushi')) return '🍣';
+  if(texto.includes('menu') || texto.includes('plato')) return '🍴';
+  if(texto.includes('tapa') || texto.includes('caña') || texto.includes('cerveza')) return '🍺';
+  if(texto.includes('vino')) return '🍷';
+  return '🍽️';
+}
 
-db.collection("anuncios").onSnapshot(snapshot=>{
-  debug.innerText = "Total ofertas en BD: " + snapshot.size;
-  
-  const anuncios=[];
-  snapshot.forEach(doc=>anuncios.push(doc.data()));
+function pintar(anuncios){
+  const lista=document.getElementById('listaAnuncios');
+  const t=getTurno();
   
   const filtrados = anuncios.filter(a => a.turno && a.turno.toLowerCase() === t);
   
-  debug.innerText += " | Ofertas para "+t+": " + filtrados.length;
-  
   if(filtrados.length===0){
-    document.getElementById('listaAnuncios').innerHTML="<p>No hay ofertas para "+t+"</p>";
+    lista.innerHTML="<p style='text-align:center'>No hay ofertas para "+t+" ahora</p>";
     return;
   }
   
-  document.getElementById('listaAnuncios').innerHTML = filtrados.map((a,i)=>{
-    return `<div class="card ${i===0?'amarilla':'blanca'}">
-      ${i===0?'<div class="recomendado">RECOMENDADO</div>':''}
-      <h3>${a.bar.toUpperCase()}</h3>
-      <p>${a.texto}</p>
-    </div>`
-  }).join('');
+  lista.innerHTML = filtrados.map((a,i)=>{
+    const precio = extraerPrecio(a.texto);
+    const textoSinPrecio = a.texto.replace(/\d+[,.]?\d*\s*€/,'').trim();
+    const icono = getIcono(a.texto);
+    return `
+    <div class="card ${i===0?'amarilla':'blanca'}">
+      ${i===0?'<div class="cinta">Recomendado<br>Menuplus</div>':''}
+      <div class="card-header">
+        <h3>${a.bar.toUpperCase()}</h3>
+        <div class="icono">${icono}</div>
+      </div>
+      
+      <div class="precio-box">
+        <span class="label">Oferta de hoy:</span>
+      </div>
+      <div class="precio-box">
+        <span class="label">${textoSinPrecio}</span>
+      </div>
+      <div class="precio">${precio}<small>€</small></div>
+      
+      <div class="desc">Primer plato + Segundo + Bebida + Postre</div>
+      
+      <div class="horario"><span class="dot"></span> Abierto ahora • 13:00 - 00:00</div>
+    </div>
+  `}).join('');
+}
+
+db.collection("anuncios").onSnapshot(snapshot=>{
+  const anuncios=[];
+  snapshot.forEach(doc=>anuncios.push(doc.data()));
+  pintar(anuncios);
 });
+
+document.getElementById('fecha').innerText="Descubre las mejores ofertas de hoy • Actualizado hoy, "+new Date().toLocaleDateString('es-ES',{day:'numeric', month:'short', year:'numeric'});
 </script>
 </body>
 </html>
