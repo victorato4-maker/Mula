@@ -52,7 +52,7 @@ header p{margin:0}
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCfKMgXwZqzH_v8D4ua5UHLeKIL-Z3iKog", // CLAVE NUEVA
+  apiKey: "AIzaSyCfKMgXwZqzH_v8D4ua5UHLeKIL-Z3iKog",
   authDomain: "menuplus-mula.firebaseapp.com",
   projectId: "menuplus-mula",
   storageBucket: "menuplus-mula.firebasestorage.app",
@@ -113,7 +113,7 @@ function pintar(anuncios){
     <div id="plantilla-${i}" class="plantilla-captura card ${i===0?'amarilla':'blanca'}">
       ${i===0?'<div class="recomendado">RECOMENDADO MENUPLUS</div>':''}
       <img src="logo-menuplus.png">
-      <h3 style="color:${txtColor}">${a.bar.split('@')[0].toUpperCase()}</h3>
+      <h3 style="color:${txtColor}">${a.bar.toUpperCase()}</h3>
       <p style="color:${txtColor}">${a.texto}</p>
       <p class="web" style="color:${webColor}">menuplus.es</p>
     </div>
