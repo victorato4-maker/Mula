@@ -3,56 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MenuPlus Mula</title>
+<title>MenuPlus Mula - Ofertas del día</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial;background:#F8F9FA;color:#002F6C;padding-bottom:80px}
-header{background:#002F6C;padding:18px 20px;color:#fff}
-header h1{color:#FFC300;margin:0;font-size:24px;font-weight:800}
-header h1 span{color:#fff}
-.debug-bar{background:#002F6C;color:#FFC300;padding:10px;text-align:center;font-weight:700;font-size:13px;border-bottom:3px solid #FFC300}
-.container{padding:20px;max-width:700px;margin:auto}
-.container h2{font-size:28px;margin:15px 0 5px;font-weight:800;color:#002F6C}
-.container p.sub{color:#666;margin:0 0 25px;font-size:14px}
-.card{border-radius:18px;padding:0;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative;overflow:hidden}
-.amarilla{background:#FFC300}
-.blanca{background:#fff}
-.cinta{position:absolute;top:0;right:16px;background:#002F6C;color:#FFC300;padding:5px 12px;border-radius:0 0 8px 8px;font-size:11px;font-weight:700;text-align:center;line-height:1.3;z-index:2}
-.card-img{width:100%;display:block;border-radius:18px}
-.card-body{padding:20px}
-.card h3{margin:0 0 12px;font-size:22px;color:#002F6C;font-weight:800}
-.card-content{display:flex;gap:15px;align-items:center}
-.icono{font-size:40px;flex-shrink:0}
-.info{flex:1}
-.label{font-size:13px;font-weight:700;margin-bottom:4px;color:#002F6C}
-.titulo-oferta{font-size:16px;margin-bottom:10px;color:#002F6C;font-weight:700}
-.precio{font-size:52px;font-weight:800;color:#002F6C;line-height:1;margin-bottom:12px}
-.precio small{font-size:26px}
-.btn-llamar{display:block;width:100%;text-decoration:none;text-align:center;padding:12px;border-radius:10px;font-weight:800;font-size:15px;background:#002F6C;color:#FFC300;display:flex;align-items:center;justify-content:center;gap:8px}
-.footer-nav{position:fixed;bottom:0;left:0;right:0;background:#002F6C;display:flex;justify-content:space-around;padding:8px 0;color:#fff}
-.footer-nav div{text-align:center;font-size:11px;opacity:.7}
-.footer-nav.active{opacity:1}
-.footer-nav.active span{background:#FFC300;color:#002F6C;padding:4px 14px;border-radius:8px;font-weight:700}
+body{font-family:Arial;background:#F8F9FA;margin:0;padding:0 0 80px 0;color:#002F6C}
+header{background:#002F6C;color:#FFC300;padding:20px;text-align:center;position:sticky;top:0;z-index:10}
+header h1{margin:0;font-size:28px;font-weight:900}
+.container{max-width:800px;margin:auto;padding:20px}
+.tarjeta{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.nombre-bar{font-size:30px;font-weight:900;color:#002F6C;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.etiqueta{font-size:14px;color:#555;margin-bottom:10px;font-weight:600}
+.precio{display:flex;align-items:center;gap:15px;margin:15px 0}
+.precio .icono{font-size:40px}
+.precio .num{font-size:65px;font-weight:900;color:#002F6C;line-height:1}
+.precio .num span{font-size:30px}
+.extras{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px}
+.extras span{background:#FFC300;color:#002F6C;padding:6px 12px;border-radius:20px;font-size:14px;font-weight:800}
+.btn-reservar{background:#002F6C;color:#FFC300;width:100%;padding:16px;border:none;border-radius:12px;font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-reservar:hover{opacity:.9;transform:scale(1.02)}
+.imagen-oferta{width:100%;border-radius:12px;margin-bottom:15px;border:4px solid #FFC300;box-sizing:border-box}
+.nav-bottom{display:flex;justify-content:space-around;background:#002F6C;padding:12px 0;position:fixed;bottom:0;width:100%;box-shadow:0 -2px 10px rgba(0,0,0,.1)}
+.nav-bottom a{color:#FFC300;text-decoration:none;font-size:12px;text-align:center;font-weight:700}
+.cerrado-box{text-align:center;margin-top:80px;padding:40px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 </head>
 <body>
-<header><h1>Menuplus <span>Mula</span></h1></header>
-
-<div id="debug" class="debug-bar">Cargando ofertas...</div>
-
-<div class="container">
-<h2>Bares en Mula</h2>
-<p class="sub" id="fecha">Descubre las mejores ofertas de hoy</p>
-<div id="listaAnuncios"></div>
-</div>
-
-<div class="footer-nav">
-<div class="active"><span>🏠<br>Inicio</span></div>
-<div>🔍<br>Buscar</div>
-<div>📤<br>Compartir</div>
+<header><h1>🍽️ MenuPlus Mula</h1></header>
+<div class="container" id="ofertas"></div>
+<div class="nav-bottom">
+  <a href="#">🏠<br>Inicio</a>
+  <a href="#">🔍<br>Buscar</a>
+  <a href="#">📤<br>Compartir</a>
 </div>
 
 <script>
@@ -66,9 +48,6 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-const storage=firebase.storage();
-
-let yaBorradoHoy = {comida: false, cena: false};
 
 function getTurno(){
   const h=new Date().getHours()+new Date().getMinutes()/60;
@@ -77,87 +56,52 @@ function getTurno(){
   return"cerrado";
 }
 
-// BORRADO AUTOMÁTICO 16:30 Y 23:30
-function iniciarBorradoAutomatico(){
-  setInterval(async () => {
-    const ahora = new Date();
-    const horas = ahora.getHours();
-    const minutos = ahora.getMinutes();
+async function cargarOfertas(){
+  const turno = getTurno();
+  const contenedor = document.getElementById('ofertas');
+  
+  if(turno==="cerrado"){
+    contenedor.innerHTML = `<div class="cerrado-box"><h2>🔒 Volvemos a las 8:00</h2><p>El horario de ofertas es de 8:00 a 23:30</p></div>`;
+    return;
+  }
+  
+  const snapshot = await db.collection("anuncios").where("turno","==",turno).orderBy("timestamp","desc").get();
+  contenedor.innerHTML = "";
 
-    if(horas === 16 && minutos === 30 && !yaBorradoHoy.comida){
-      console.log("WEB: Borrando turno comida...");
-      await borrarTurnoCompleto("comida");
-      yaBorradoHoy.comida = true;
-      yaBorradoHoy.cena = false;
-    }
-
-    if(horas === 23 && minutos === 30 && !yaBorradoHoy.cena){
-      console.log("WEB: Borrando turno cena...");
-      await borrarTurnoCompleto("cena");
-      yaBorradoHoy.cena = true;
-      yaBorradoHoy.comida = false;
-    }
-    
-    if(horas === 0 && minutos === 1){
-      yaBorradoHoy = {comida: false, cena: false};
-    }
-  }, 1000 * 60);
-}
-
-async function borrarTurnoCompleto(turnoABorrar){
-  const snapshot = await db.collection("anuncios").where("turno", "==", turnoABorrar).get();
-  const batch = db.batch();
-  snapshot.forEach(doc => {
-    if(doc.data().imagenUrl){
-      const imageRef = storage.refFromURL(doc.data().imagenUrl);
-      imageRef.delete().catch(()=>{});
-    }
-    batch.delete(doc.ref);
-  });
-  await batch.commit();
-  document.getElementById('debug').innerText = `Borrado automático: ${turnoABorrar} limpiado a las ${new Date().toLocaleTimeString()}`;
-}
-
-iniciarBorradoAutomatico(); // Arranca al cargar la web
-
-function pintar(anuncios){
-  const lista=document.getElementById('listaAnuncios');
-  const debug=document.getElementById('debug');
-  const t=getTurno();
-  const filtrados = anuncios.filter(a => a.turno && a.turno.toLowerCase() === t);
-
-  debug.innerText = `Total: ${anuncios.length} | Para ${t}: ${filtrados.length}`;
-
-  if(filtrados.length===0){
-    lista.innerHTML="<p style='text-align:center'>No hay ofertas para "+t+" ahora</p>";
+  if(snapshot.empty){
+    contenedor.innerHTML = "<p style='text-align:center;margin-top:50px'>No hay ofertas para este turno todavía</p>";
     return;
   }
 
-  lista.innerHTML = filtrados.map((a,i)=>{
-    const tel = a.telefono? a.telefono.replace(/\D/g,'') : '';
-    const esPrimero = i===0;
+  snapshot.forEach(doc => {
+    const data = doc.data();
     
-    let contenido = '';
-    if(a.imagenUrl){
-      contenido = `<img src="${a.imagenUrl}" class="card-img" alt="Oferta de ${a.bar}">`;
-    } else if(a.texto){
-      const precio = a.texto.match(/(\d+[,.]?\d*)\s*€/)?.[1] || '';
-      const textoSinPrecio = a.texto.replace(/\d+[,.]?\d*\s*€/,'').trim();
-      const icono = a.texto.toLowerCase().includes('sushi') ? '🍣' : a.texto.toLowerCase().includes('menu') ? '🍴' : '🍽️';
-      contenido = `<div class="card-body"><h3>${a.bar.toUpperCase()}</h3><div class="card-content"><div class="icono">${icono}</div><div class="info"><div class="label">Oferta de hoy:</div><div class="titulo-oferta">${textoSinPrecio}</div>${precio ? `<div class="precio">${precio}<small>€</small></div>` : ''}${tel? `<a href="tel:${tel}" class="btn-llamar">📞 Llamar y Reservar</a>` : ''}</div></div></div>`;
-    }
+    let extrasHTML = "";
+    if(data.incluyeEnsalada) extrasHTML += `<span>🥗 Incluye Ensalada</span>`;
+    if(data.incluyeCafe) extrasHTML += `<span>☕ Incluye Café</span>`;
 
-    return `<div class="card ${esPrimero?'amarilla':'blanca'}">${esPrimero?'<div class="cinta">Recomendado<br>Menuplus</div>':''}${contenido}${a.imagenUrl && tel ? `<div class="card-body"><a href="tel:${tel}" class="btn-llamar">📞 Llamar y Reservar</a></div>` : ''}</div>`;
-  }).join('');
+    const tarjeta = `
+    <div class="tarjeta">
+      <div class="nombre-bar">${data.bar}</div>
+      <div class="etiqueta">Oferta de hoy:</div>
+      <img src="${data.imagenUrl}" class="imagen-oferta" alt="Oferta de ${data.bar}">
+      
+      <div class="precio">
+        <div class="icono">🍴</div>
+        <div class="num">${data.precio || '?' }<span>€</span></div>
+      </div>
+
+      <div class="extras">${extrasHTML}</div>
+
+      <button class="btn-reservar" onclick="window.location.href='tel:${data.telefono}'">📞 Llamar y Reservar</button>
+    </div>`;
+    contenedor.innerHTML += tarjeta;
+  });
 }
 
-db.collection("anuncios").onSnapshot(snapshot=>{
-  const anuncios=[];
-  snapshot.forEach(doc=>anuncios.push(doc.data()));
-  pintar(anuncios);
-});
-
-document.getElementById('fecha').innerText="Descubre las mejores ofertas de hoy • Actualizado hoy, "+new Date().toLocaleDateString('es-ES',{day:'numeric', month:'short', year:'numeric'});
+cargarOfertas();
+// Recargar cada 5 minutos por si cambia de turno
+setInterval(cargarOfertas, 1000 * 60 * 5);
 </script>
 </body>
 </html>
