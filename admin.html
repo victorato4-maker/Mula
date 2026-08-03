@@ -23,7 +23,7 @@
 <label class="font-bold">Escribe tu menú o oferta:</label>
 <textarea id="textoMenu" rows="4" class="w-full p-2 border rounded mt-2"></textarea>
 <button id="btnPublicar" onclick="publicar()" class="w-full btn-yellow font-bold py-3 rounded mt-4">PUBLICAR MENÚ</button>
-<button onclick="borrar()" class="w-full bg-red-600 text-white font-bold py-2 rounded mt-2">BORRAR MI ANUNCIO</button>
+<button id="btnBorrar" onclick="borrar()" class="w-full bg-red-600 text-white font-bold py-2 rounded mt-2">BORRAR MI ANUNCIO</button>
 </div>
 <div id="vistaPrevia" class="mt-6 hidden">
 <h2 class="font-bold mb-2">Tu imagen para WhatsApp:</h2>
@@ -46,7 +46,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig); const auth=firebase.auth(); const db=firebase.firestore(); let userId=null;
 function getTurno(){const h=new Date().getHours()+new Date().getMinutes()/60; if(h>=8&&h<16)return"comida"; if(h>=16&&h<23.5)return"cena"; return"cerrado";}
-function actualizarUI(){const t=getTurno(); const btn=document.getElementById('btnPublicar'); if(t==="cerrado"){btn.disabled=true; btn.innerText="CERRADO. Vuelve a las 8:00 "}else{btn.disabled=false; btn.innerText=`PUBLICAR MENÚ DE ${t.toUpperCase()}`; document.getElementById('status').innerText=`Horario activo: ${t}`}}
+function actualizarUI(){const t=getTurno(); const btn=document.getElementById('btnPublicar'); const btnBorrar=document.getElementById('btnBorrar'); const form=document.getElementById('formulario'); const status=document.getElementById('status'); if(t==="cerrado"){form.style.display='none'; status.innerText="cerrado: vuelve a partir de las ocho"; status.style.background="#FFD700"; status.style.color="#003366"; status.style.fontSize="22px"; status.style.fontWeight="bold"; status.style.padding="20px"; status.style.textAlign="center"; status.style.borderRadius="8px"}else{form.style.display='block'; btn.innerText=`PUBLICAR MENÚ DE ${t.toUpperCase()}`; status.innerText=`Horario activo: ${t}`; status.style.background=""; status.style.color=""; status.style.fontSize=""; status.style.padding=""}}
 async function publicar(){const texto=document.getElementById('textoMenu').value; const t=getTurno(); if(!texto)return alert("Escribe algo"); if(t==="cerrado")return alert("Fuera de horario"); await db.collection("anuncios").doc(userId).delete(); await db.collection("anuncios").doc(userId).set({bar:auth.currentUser.email,texto:texto,turno:t,timestamp:new Date(),expira:t==="comida"?"16:00":"23:30"}); document.getElementById('textoEnImagen').innerText=texto; document.getElementById('vistaPrevia').classList.remove('hidden'); alert("¡Publicado!")}
 async function borrar(){await db.collection("anuncios").doc(userId).delete(); alert("Borrado")}
 function descargarImagen(){html2canvas(document.getElementById('plantilla')).then(c=>{const a=document.createElement('a'); a.download='menu-menuplus.png'; a.href=c.toDataURL(); a.click()})}
