@@ -92,6 +92,27 @@ function getIcono(texto){
   return '🍽️';
 }
 
+// BORRAR AUTOMÁTICO A LAS 16:30 Y 23:30
+function programarBorrado() {
+  const ahora = new Date();
+  const horas = ahora.getHours();
+  const minutos = ahora.getMinutes();
+
+  if((horas === 16 && minutos === 30) || (horas === 23 && minutos === 30)){
+    console.log("Borrando todas las ofertas...");
+    db.collection("anuncios").get().then(snapshot => {
+      snapshot.forEach(doc => {
+        db.collection("anuncios").doc(doc.id).delete();
+      })
+    }).then(() => {
+      console.log("Borrado completo");
+    });
+  }
+}
+
+// Revisar cada minuto
+setInterval(programarBorrado, 1000 * 60);
+
 function pintar(anuncios){
   const lista=document.getElementById('listaAnuncios');
   const debug=document.getElementById('debug');
