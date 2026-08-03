@@ -23,8 +23,9 @@
 <div id="app"></div>
 
 <script>
+// CLAVE NUEVA
 const firebaseConfig = {
-  apiKey: "AIzaSyBvLxYqK8mN9pR3sT7uV2wX4zA6cE1gH5j",
+  apiKey: "AIzaSyCfKMgXwZqzH_v8D4ua5UHLeKIL-Z3iKog",
   authDomain: "menuplus-mula.firebaseapp.com",
   projectId: "menuplus-mula",
   storageBucket: "menuplus-mula.appspot.com",
@@ -53,7 +54,7 @@ if(horaActual < 8 || horaActual >= 23.5){
       <p>El horario para publicar es de 8:00 a 23:30</p>
     </div>
   </div>`;
-  auth.signOut(); // Cierra sesión si estaba abierta
+  auth.signOut(); 
 } 
 else if(horaActual >= 8 && horaActual < 16){
     turnoActual = "Comida 8:00 - 16:00";
@@ -74,7 +75,7 @@ document.getElementById('app').innerHTML = `
     </div>
     <div id="panel-box" style="display:none">
         <p>Bienvenido: <b id="userEmail"></b></p>
-        <div id="avisoTurno"></div>
+        <div id="avisoTurno" class="aviso"></div>
         <label>Nombre del Bar</label>
         <input type="text" id="barNombre">
         <label>Teléfono WhatsApp para Pedidos</label>
@@ -88,7 +89,7 @@ document.getElementById('app').innerHTML = `
     </div>
 </div>`;
 
-// BORRAR OFERTAS VIEJAS DEL TURNO ANTERIOR
+// BORRAR OFERTAS VIEJAS
 db.collection("ofertas").get().then(snapshot => {
     snapshot.forEach(doc => {
         const data = doc.data();
@@ -104,46 +105,44 @@ auth.onAuthStateChanged(user => {
     document.getElementById('panel-box').style.display = 'block';
     document.getElementById('userEmail').innerText = user.email;
     document.getElementById('turno').innerHTML = `<option>${turnoActual}</option>`;
-    document.getElementById('avisoTurno').innerHTML = `<div class="aviso">Solo puedes publicar: ${turnoActual}</div>`;
+    document.getElementById('avisoTurno').innerText = `Publicando para el turno: ${turnoActual}`;
   }
-});
+})
+}
 
+// 3. FUNCIONES QUE FALTABAN
 function entrar(){
-    const email = document.getElementById('email').value;
-    const pass = document.getElementById('password').value;
-    auth.createUserWithEmailAndPassword(email, pass)
-    .then(() => alert("Registrado correctamente"))
-    .catch(() => {
-        auth.signInWithEmailAndPassword(email, pass)
-        .then(() => alert("Bienvenido de nuevo"))
-        .catch(e => alert("Error: " + e.message))
-    })
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  auth.signInWithEmailAndPassword(email, password)
+  .catch(() => {
+    auth.createUserWithEmailAndPassword(email, password);
+  });
 }
 
 function publicar(){
-    const user = auth.currentUser;
-    if(!user) return alert("Inicia sesión primero");
-    
-    db.collection("ofertas").add({
-        barId: user.uid,
-        email: user.email,
-        nombre: document.getElementById('barNombre').value,
-        telefono: document.getElementById('barTelefono').value,
-        turno: turnoActual,
-        menu: document.getElementById('menu').value,
-        fecha: new Date().toLocaleDateString('es-ES'),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        alert("¡Oferta publicada! Se borrará a las " + (turnoActual.includes("Comida") ? "16:00" : "23:30"));
-        document.getElementById('menu').value = "";
-    }).catch(e => alert("Error al publicar: " + e.message));
+  const btn = document.getElementById('btnPublicar');
+  btn.disabled = true;
+  btn.innerText = "Publicando...";
+  
+  db.collection("ofertas").add({
+    bar: document.getElementById('barNombre').value,
+    telefono: document.getElementById('barTelefono').value,
+    menu: document.getElementById('menu').value,
+    turno: turnoActual,
+    fecha: new Date()
+  }).then(() => {
+    alert("¡Oferta publicada con éxito!");
+    document.getElementById('menu').value = "";
+    btn.disabled = false;
+    btn.innerText = "Publicar Oferta";
+  });
 }
 
 function salir(){
-    auth.signOut();
-    location.reload();
+  auth.signOut();
+  location.reload();
 }
-} // fin del if !panelBloqueado
 </script>
 </body>
 </html>
