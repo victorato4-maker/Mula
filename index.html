@@ -29,9 +29,14 @@ header h1 span{color:#fff}
 
 .info{flex:1}
 .label{font-size:13px;font-weight:700;margin-bottom:4px;color:#002F6C}
-.titulo-oferta{font-size:16px;margin-bottom:8px;color:#002F6C;font-weight:700} /* AZUL Y NEGRITA */
-.precio{font-size:52px;font-weight:800;color:#002F6C;line-height:1}
+.titulo-oferta{font-size:16px;margin-bottom:10px;color:#002F6C;font-weight:700}
+.precio{font-size:52px;font-weight:800;color:#002F6C;line-height:1;margin-bottom:12px}
 .precio small{font-size:26px}
+
+.botones{display:flex;gap:8px}
+.btn{flex:1;text-decoration:none;text-align:center;padding:10px;border-radius:10px;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-llamar{background:#002F6C;color:#FFC300}
+.btn-ws{background:#25D366;color:#fff}
 
 .footer-nav{position:fixed;bottom:0;left:0;right:0;background:#002F6C;display:flex;justify-content:space-around;padding:8px 0;color:#fff}
 .footer-nav div{text-align:center;font-size:11px;opacity:.7}
@@ -107,6 +112,8 @@ function pintar(anuncios){
     const precio = extraerPrecio(a.texto);
     const textoSinPrecio = a.texto.replace(/\d+[,.]?\d*\s*€/,'').trim();
     const icono = getIcono(a.texto);
+    const tel = a.telefono? a.telefono.replace(/\D/g,'') : '';
+    
     return `
     <div class="card ${i===0?'amarilla':'blanca'}">
       ${i===0?'<div class="cinta">Recomendado<br>Menuplus</div>':''}
@@ -117,6 +124,12 @@ function pintar(anuncios){
           <div class="label">Oferta de hoy:</div>
           <div class="titulo-oferta">${textoSinPrecio}</div>
           <div class="precio">${precio}<small>€</small></div>
+          ${tel? `
+          <div class="botones">
+            <a href="tel:${tel}" class="btn btn-llamar">📞 Llamar</a>
+            <a href="https://wa.me/34${tel}" target="_blank" class="btn btn-ws">💬 WhatsApp</a>
+          </div>
+          ` : ''}
         </div>
       </div>
     </div>
