@@ -1,42 +1,76 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel MenuPlus Mula</title>
+<title>MenuPlus - Panel de Bares</title>
 <style>
 body{font-family:Arial;background:#F8F9FA;margin:0;padding:20px;color:#002F6C}
-.container{max-width:650px;margin:auto;background:#fff;padding:25px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
-h2{text-align:center;color:#002F6C}
-input,textarea,button{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px;font-size:15px;box-sizing:border-box}
-button{background:#002F6C;color:#FFC300;border:none;font-weight:800;cursor:pointer}
+.container{max-width:700px;margin:auto;background:#fff;padding:25px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+h1{color:#002F6C;text-align:center;margin-bottom:20px}
+input,select,textarea,button{width:100%;padding:12px;margin:8px 0;border:2px solid #FFC300;border-radius:8px;font-size:16px;box-sizing:border-box}
+button{background:#002F6C;color:#FFC300;border:none;font-weight:800;cursor:pointer;font-size:18px}
 button:hover{opacity:.9}
-button:disabled{background:#ccc;color:#666;cursor:not-allowed}
-.btn-sec{background:#FFC300;color:#002F6C}
-.btn-danger{background:#dc3545;color:#fff}
-.oculto{display:none}
-.selector{display:flex;gap:10px;margin:15px 0}
-.selector button{flex:1;background:#ddd;color:#002F6C}
-.selector button.activo{background:#FFC300;color:#002F6C}
-label{font-weight:700;font-size:14px;margin-top:8px;display:block}
-.subtitulo{font-size:13px;color:#555;margin-top:-5px;margin-bottom:5px}
-.grid-opciones{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.checkbox-label{display:flex;align-items:center;gap:10px;font-weight:400;margin:5px 0}
-.checkbox-label input{width:auto;margin:0}
-.logout{text-align:right;margin-bottom:10px}
-.logout button{width:auto;padding:8px 12px;font-size:12px;background:#ccc;color:#000}
-.aviso{padding:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;color:#856404;margin:10px 0;text-align:center;font-weight:700}
-.cerrado { background:#002F6C; height:100vh; display:flex; justify-content:center; align-items:center; color:white; text-align:center; padding:20px }
+.hidden{display:none}
+.tabs{display:flex;gap:10px;margin-bottom:20px}
+.tabs button{flex:1;background:#FFC300;color:#002F6C}
+.tabs button.active{background:#002F6C;color:#FFC300}
+.checks{display:flex;gap:15px;margin:10px 0}
+.checks label{font-weight:700}
+#preview{margin-top:20px;text-align:center}
+#preview img{max-width:100%;border:4px solid #FFC300;border-radius:12px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-<div id="app"></div>
+<div class="container">
+<h1>🍽️ Panel MenuPlus</h1>
+
+<div id="auth">
+  <input id="email" type="email" placeholder="Correo del bar">
+  <input id="pass" type="password" placeholder="Contraseña">
+  <input id="nombreBar" placeholder="Nombre del Bar">
+  <input id="telefono" placeholder="Teléfono">
+  <button onclick="registrar()">Registrarse</button>
+  <button onclick="login()">Entrar</button>
+  <p id="authMsg"></p>
+</div>
+
+<div id="panel" class="hidden">
+  <h2 id="bienvenida"></h2>
+  <button onclick="logout()" style="background:#c00">Cerrar Sesión</button>
+  <hr>
+
+  <div class="tabs">
+    <button id="btnOferta" class="active" onclick="setTipo('oferta')">Oferta Rápida</button>
+    <button id="btnMenu" onclick="setTipo('menu')">Menú del Día</button>
+  </div>
+
+  <div id="formOferta">
+    <textarea id="textoOferta" rows="3" placeholder="Ej: 2 Cañas + Tapa por 3€"></textarea>
+  </div>
+
+  <div id="formMenu" class="hidden">
+    <input id="precio" type="number" step="0.01" placeholder="Precio € Ej: 12.50">
+    <textarea id="primeros" rows="3" placeholder="PRIMEROS: Separados por coma. Ej: Lentejas, Ensalada"></textarea>
+    <textarea id="segundos" rows="3" placeholder="SEGUNDOS: Ej: Pollo asado, Merluza"></textarea>
+    <textarea id="postres" rows="2" placeholder="POSTRES: Ej: Flan, Fruta"></textarea>
+    <div class="checks">
+      <label><input type="checkbox" id="ensalada"> 🥗 Incluye Ensalada</label>
+      <label><input type="checkbox" id="cafe"> ☕ Incluye Café</label>
+    </div>
+  </div>
+
+  <button onclick="publicar()">Publicar Ahora</button>
+  <p id="msg"></p>
+  <div id="preview"></div>
+</div>
+
+</div>
 
 <script>
 const firebaseConfig = {
@@ -48,128 +82,63 @@ const firebaseConfig = {
   appId: "1:90841339782:web:267a5bfb0c8338882a7e07"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
 const auth=firebase.auth();
+const db=firebase.firestore();
 const storage=firebase.storage();
 
-let nombreBar = "";
-let telefonoBar = "";
-let tipoActual = 'oferta';
-let tienePublicacion = false;
-let yaBorradoHoy = {comida: false, cena: false};
+let tipoActual='oferta';
+let nombreBar='';
+let telefonoBar='';
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    if(!user.emailVerified){auth.signOut();document.getElementById('authMsg').innerText='Verifica tu correo primero';return}
+    document.getElementById('auth').classList.add('hidden');
+    document.getElementById('panel').classList.remove('hidden');
+    db.collection('bares').doc(user.uid).get().then(doc=>{
+      nombreBar=doc.data().nombre;
+      telefonoBar=doc.data().telefono;
+      document.getElementById('bienvenida').innerText='Hola '+nombreBar;
+    });
+  }else{
+    document.getElementById('auth').classList.remove('hidden');
+    document.getElementById('panel').classList.add('hidden');
+  }
+});
+
+function setTipo(t){
+  tipoActual=t;
+  document.getElementById('btnOferta').classList.toggle('active',t==='oferta');
+  document.getElementById('btnMenu').classList.toggle('active',t==='menu');
+  document.getElementById('formOferta').classList.toggle('hidden',t!=='oferta');
+  document.getElementById('formMenu').classList.toggle('hidden',t!=='menu');
+}
+
+function registrar(){
+  const e=document.getElementById('email').value;
+  const p=document.getElementById('pass').value;
+  const n=document.getElementById('nombreBar').value;
+  const t=document.getElementById('telefono').value;
+  auth.createUserWithEmailAndPassword(e,p).then(cred=>{
+    cred.user.sendEmailVerification();
+    db.collection('bares').doc(cred.user.uid).set({nombre:n,telefono:t,email:e});
+    document.getElementById('authMsg').innerText='Registrado. Revisa tu correo para verificar';
+  }).catch(err=>document.getElementById('authMsg').innerText=err.message);
+}
+
+function login(){
+  const e=document.getElementById('email').value;
+  const p=document.getElementById('pass').value;
+  auth.signInWithEmailAndPassword(e,p).catch(err=>document.getElementById('authMsg').innerText=err.message);
+}
+
+function logout(){auth.signOut()}
 
 function getTurno(){
   const h=new Date().getHours()+new Date().getMinutes()/60;
   if(h>=8&&h<16)return"comida";
   if(h>=16&&h<23.5)return"cena";
   return"cerrado";
-}
-
-const turno = getTurno();
-if(turno==="cerrado"){
-  document.getElementById('app').innerHTML = `<div class="cerrado"><div><h1>🔒 Panel Cerrado</h1><h2>Vuelve a partir de las 8:00</h2><p>El horario para publicar es de 8:00 a 23:30</p></div></div>`;
-} else {
-  cargarPanel();
-  iniciarBorradoAutomatico();
-}
-
-function iniciarBorradoAutomatico(){
-  setInterval(async () => {
-    const ahora = new Date();
-    const horas = ahora.getHours();
-    const minutos = ahora.getMinutes();
-    if(horas === 16 && minutos === 30 && !yaBorradoHoy.comida){
-      await borrarTurnoCompleto("comida");
-      yaBorradoHoy.comida = true;
-      yaBorradoHoy.cena = false;
-      alert("Se han borrado todas las ofertas de COMIDA");
-    }
-    if(horas === 23 && minutos === 30 && !yaBorradoHoy.cena){
-      await borrarTurnoCompleto("cena");
-      yaBorradoHoy.cena = true;
-      yaBorradoHoy.comida = false;
-      alert("Se han borrado todas las ofertas de CENA");
-    }
-    if(horas === 0 && minutos === 1){ yaBorradoHoy = {comida: false, cena: false}; }
-  }, 1000 * 60);
-}
-
-async function borrarTurnoCompleto(turnoABorrar){
-  const snapshot = await db.collection("anuncios").where("turno", "==", turnoABorrar).get();
-  const batch = db.batch();
-  snapshot.forEach(doc => {
-    if(doc.data().imagenUrl){
-      const imageRef = storage.refFromURL(doc.data().imagenUrl);
-      imageRef.delete().catch(()=>{});
-    }
-    batch.delete(doc.ref);
-  });
-  await batch.commit();
-}
-
-function cargarPanel(){
-  document.getElementById('app').innerHTML = `
-  <div class="container">
-    <div id="authBox">
-      <h2>Acceso Bares MenuPlus</h2>
-      <input id="email" type="email" placeholder="Correo del bar">
-      <input id="password" type="password" placeholder="Contraseña">
-      <button onclick="login()">Entrar</button>
-      <button class="btn-sec" onclick="registro()">Registrarse</button>
-      <p id="authMsg" style="color:red;text-align:center"></p>
-    </div>
-    <div id="panelBox" class="oculto">
-      <div class="logout"><button onclick="logout()">Cerrar Sesión</button></div>
-      <h2>Publicar Oferta</h2>
-      <p><b>Bar:</b> <span id="nombreBar"></span> | <b>Turno:</b> <span id="turnoActual">${turno}</span></p>
-      <div id="avisoBloqueo" class="aviso oculto">Ya tienes una publicación activa en este turno. Quítala para publicar otra.</div>
-      <h3>¿Qué quieres publicar? Solo 1 opción</h3>
-      <div class="selector">
-        <button id="btnOferta" class="activo" onclick="mostrarForm('oferta')">1. Oferta Suelta</button>
-        <button id="btnMenu" onclick="mostrarForm('menu')">2. Menú del Día</button>
-      </div>
-      <div id="formOferta">
-        <label>Texto de la oferta:</label>
-        <textarea id="textoOferta" rows="3" placeholder="Ej: 2 cañas + tapa por 5€"></textarea>
-      </div>
-      <div id="formMenu" class="oculto">
-        <label>Primeros platos <span class="subtitulo">Rellena hasta 4</span></label>
-        <div class="grid-opciones"><input type="text" id="p1_1"><input type="text" id="p1_2"><input type="text" id="p1_3"><input type="text" id="p1_4"></div>
-        <label>Segundos platos <span class="subtitulo">Rellena hasta 4</span></label>
-        <div class="grid-opciones"><input type="text" id="p2_1"><input type="text" id="p2_2"><input type="text" id="p2_3"><input type="text" id="p2_4"></div>
-        <label>Postres <span class="subtitulo">Rellena hasta 4</span></label>
-        <div class="grid-opciones"><input type="text" id="post_1"><input type="text" id="post_2"><input type="text" id="post_3"><input type="text" id="post_4"></div>
-        <label>Precio €:</label><input type="number" id="precioMenu" step="0.01" placeholder="12.50">
-        <div style="margin-top:15px;border-top:1px solid #eee;padding-top:10px">
-          <label class="checkbox-label"><input type="checkbox" id="incluyeEnsalada"> Incluye Ensalada</label>
-          <label class="checkbox-label"><input type="checkbox" id="incluyeCafe"> Incluye Café</label>
-        </div>
-      </div>
-      <button id="btnPublicar" onclick="publicar()">Publicar Ahora</button>
-      <button id="btnBorrar" class="btn-danger oculto" onclick="borrarPublicacion()">Quitar mi publicación actual</button>
-      <p id="pubMsg" style="color:green;text-align:center"></p>
-    </div>
-  </div>`;
-}
-
-async function comprobarPublicacion(){
-  const snap = await db.collection("anuncios").where("bar","==",nombreBar).where("turno","==",turno).get();
-  tienePublicacion = !snap.empty;
-  document.getElementById('btnPublicar').disabled = tienePublicacion;
-  document.getElementById('btnBorrar').classList.toggle('oculto', !tienePublicacion);
-  document.getElementById('avisoBloqueo').classList.toggle('oculto', !tienePublicacion);
-  document.querySelector('.selector').style.opacity = tienePublicacion ? '0.5' : '1';
-  document.querySelector('.selector').style.pointerEvents = tienePublicacion ? 'none' : 'auto';
-}
-
-function mostrarForm(tipo){
-  if(tienePublicacion) return;
-  tipoActual = tipo;
-  document.getElementById('formOferta').classList.toggle('oculto', tipo!=='oferta');
-  document.getElementById('formMenu').classList.toggle('oculto', tipo!=='menu');
-  document.getElementById('btnOferta').classList.toggle('activo', tipo==='oferta');
-  document.getElementById('btnMenu').classList.toggle('activo', tipo==='menu');
-  if(tipo==='oferta'){['p1_1','p1_2','p1_3','p1_4','p2_1','p2_2','p2_3','p2_4','post_1','post_2','post_3','post_4','precioMenu'].forEach(id=>document.getElementById(id).value="");document.getElementById('incluyeEnsalada').checked=false;document.getElementById('incluyeCafe').checked=false;} else {document.getElementById('textoOferta').value="";}
 }
 
 async function generarImagen(datos){
@@ -182,22 +151,22 @@ async function generarImagen(datos){
   div.style.display = 'flex';
   div.style.flexDirection = 'column';
   div.style.justifyContent = 'center';
+  div.style.background = 'linear-gradient(135deg, #FFC300 0%, #FFD700 100%)';
+  div.style.color = '#002F6C';
 
   if(datos.tipo === 'oferta'){
-    div.style.background = 'linear-gradient(135deg, #FFC300 0%, #FFD700 100%)';
-    div.style.color = '#002F6C';
-    div.innerHTML = `<h1 style="text-align:center;font-size:100px;margin:0;text-shadow:3px 3px 0 #fff">OFERTA</h1><h2 style="text-align:center;font-size:55px;margin:10px 0">${datos.bar}</h2><div style="background:#002F6C;color:#FFC300;padding:40px;border-radius:30px;margin-top:20px;font-size:70px;font-weight:900;text-align:center;line-height:1.3;border:8px solid #fff">${datos.texto}</div>`; 
+    div.innerHTML = `<h1 style="text-align:center;font-size:110px;margin:0;text-shadow:4px 4px 0 #fff">OFERTA</h1><h2 style="text-align:center;font-size:60px;margin:10px 0">${datos.bar}</h2><div style="background:#fff;color:#002F6C;padding:40px;border-radius:30px;margin-top:20px;font-size:75px;font-weight:900;text-align:center;line-height:1.3;border:8px solid #002F6C">${datos.texto}</div>`; 
   } else {
-    div.style.background = '#002F6C';
-    div.style.color = '#fff';
     let extras = '';
     if(datos.incluyeEnsalada) extras += ' + Ensalada';
     if(datos.incluyeCafe) extras += ' + Café';
-    div.innerHTML = `<div style="text-align:center;margin-bottom:20px"><h1 style="color:#FFC300;font-size:80px;margin:0;text-shadow:3px 3px 0 #000">MENÚ DEL DÍA</h1><h2 style="color:#fff;font-size:40px;margin:5px 0">${datos.bar}</h2></div><h3 style="color:#FFC300;border-bottom:5px solid #FFC300;font-size:42px;margin-bottom:10px">PRIMEROS</h3><ul style="font-size:38px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.primeros.map(p=>`<li>✓ ${p}</li>`).join('')}</ul><h3 style="color:#FFC300;border-bottom:5px solid #FFC300;font-size:42px;margin-bottom:10px">SEGUNDOS</h3><ul style="font-size:38px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.segundos.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>${datos.postres.length>0 ? `<h3 style="color:#FFC300;border-bottom:5px solid #FFC300;font-size:42px;margin-bottom:10px">POSTRES</h3><ul style="font-size:38px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.postres.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>` : ''}<div style="margin-top:auto;text-align:center;font-size:70px;font-weight:900;color:#002F6C;background:#FFC300;padding:30px;border-radius:25px;border:6px solid #fff">${datos.precio}€ ${extras}</div>`;
+    div.innerHTML = `<div style="text-align:center;margin-bottom:20px"><h1 style="color:#002F6C;font-size:90px;margin:0;text-shadow:3px 3px 0 #fff">MENÚ DEL DÍA</h1><h2 style="color:#002F6C;font-size:45px;margin:5px 0">${datos.bar}</h2></div><h3 style="color:#002F6C;border-bottom:5px solid #002F6C;font-size:45px;margin-bottom:10px">PRIMEROS</h3><ul style="font-size:40px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.primeros.map(p=>`<li>✓ ${p}</li>`).join('')}</ul><h3 style="color:#002F6C;border-bottom:5px solid #002F6C;font-size:45px;margin-bottom:10px">SEGUNDOS</h3><ul style="font-size:40px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.segundos.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>${datos.postres.length>0 ? `<h3 style="color:#002F6C;border-bottom:5px solid #002F6C;font-size:45px;margin-bottom:10px">POSTRES</h3><ul style="font-size:40px;line-height:1.6;margin:0 0 20px 0;list-style:none;padding:0">${datos.postres.map(p=>`<li>✓ ${p}</li>`).join('')}</ul>` : ''}<div style="margin-top:auto;text-align:center;font-size:75px;font-weight:900;color:#FFC300;background:#002F6C;padding:30px;border-radius:25px;border:6px solid #fff">${datos.precio}€ ${extras}</div>`;
   }
   document.body.appendChild(div);
   const canvas = await html2canvas(div, {scale: 2, backgroundColor: null});
   document.body.removeChild(div);
+  document.getElementById('preview').innerHTML='<h3>Vista Previa:</h3>';
+  document.getElementById('preview').appendChild(canvas);
   return new Promise(resolve => {
     canvas.toBlob(async (blob)=>{
       const ref = storage.ref(`publicaciones/${Date.now()}.png`);
@@ -209,75 +178,41 @@ async function generarImagen(datos){
 }
 
 async function publicar(){
-  if(tienePublicacion){ alert("Primero quita tu publicación actual"); return; }
-  document.getElementById('pubMsg').innerText = "Generando imagen...";
-  let urlImagen = "";
-  if(tipoActual === 'oferta'){
-    const texto = document.getElementById('textoOferta').value;
-    if(!texto){ alert("Escribe la oferta"); return; }
-    urlImagen = await generarImagen({tipo:'oferta', bar: nombreBar, texto: texto});
+  const turno=getTurno();
+  if(turno==='cerrado'){document.getElementById('msg').innerText='Fuera de horario. Solo 8:00 a 23:30';return}
+  
+  let datos={bar:nombreBar,tipo:tipoActual};
+  if(tipoActual==='oferta'){
+    datos.texto=document.getElementById('textoOferta').value;
+    if(!datos.texto)return alert('Escribe la oferta');
   } else {
-    const primeros = ['p1_1','p1_2','p1_3','p1_4'].map(id=>document.getElementById(id).value).filter(v=>v.trim()!="");
-    const segundos = ['p2_1','p2_2','p2_3','p2_4'].map(id=>document.getElementById(id).value).filter(v=>v.trim()!="");
-    const postres = ['post_1','post_2','post_3','post_4'].map(id=>document.getElementById(id).value).filter(v=>v.trim()!="");
-    const precio = document.getElementById('precioMenu').value;
-    const ensalada = document.getElementById('incluyeEnsalada').checked;
-    const cafe = document.getElementById('incluyeCafe').checked;
-    if(primeros.length===0 || segundos.length===0 || !precio){ alert("Mete al menos 1 primer plato, 1 segundo y el precio"); return; }
-    urlImagen = await generarImagen({tipo:'menu', bar: nombreBar, primeros, segundos, postres, precio, incluyeEnsalada: ensalada, incluyeCafe: cafe});
+    datos.precio=document.getElementById('precio').value;
+    datos.primeros=document.getElementById('primeros').value.split(',').map(s=>s.trim()).filter(Boolean);
+    datos.segundos=document.getElementById('segundos').value.split(',').map(s=>s.trim()).filter(Boolean);
+    datos.postres=document.getElementById('postres').value.split(',').map(s=>s.trim()).filter(Boolean);
+    datos.incluyeEnsalada=document.getElementById('ensalada').checked;
+    datos.incluyeCafe=document.getElementById('cafe').checked;
+    if(!datos.precio)return alert('Pon el precio');
   }
-  await db.collection("anuncios").add({bar: nombreBar,telefono: telefonoBar,turno: turno,tipo: tipoActual,imagenUrl: urlImagen,timestamp: firebase.firestore.FieldValue.serverTimestamp()});
-  document.getElementById('pubMsg').innerText = "¡Publicado para "+turno+"!";comprobarPublicacion();setTimeout(()=>{document.getElementById('pubMsg').innerText=""}, 3000);
-}
 
-async function borrarPublicacion(){
-  if(!confirm("¿Seguro que quieres quitar tu publicación del turno de "+turno+"?")) return;
-  const snapshot = await db.collection("anuncios").where("bar", "==", nombreBar).where("turno", "==", turno).get();
-  const batch = db.batch();
-  snapshot.forEach(doc => batch.delete(doc.ref));
-  await batch.commit();
-  document.getElementById('pubMsg').innerText = "Publicación quitada. Ya puedes publicar otra.";
-  comprobarPublicacion();
-  setTimeout(()=>{document.getElementById('pubMsg').innerText=""}, 3000);
-}
+  document.getElementById('msg').innerText='Generando imagen...';
+  const urlImagen=await generarImagen(datos);
 
-function registro(){
-  const email=document.getElementById('email').value;
-  const password=document.getElementById('password').value;
-  auth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
-    const nombre = prompt("Nombre del bar:");
-    const telefono = prompt("Teléfono del bar:");
-    db.collection("bares").doc(userCredential.user.uid).set({nombre, telefono, email});
-    userCredential.user.sendEmailVerification();
-    document.getElementById('authMsg').innerText = "Registro OK. Revisa tu correo y verifica.";
-    auth.signOut();
-  }).catch((error) => { document.getElementById('authMsg').innerText = error.message });
-}
+  // AQUI GUARDAMOS TODO PARA QUE SALGA GRANDE EN EL INDEX
+  await db.collection("anuncios").add({
+    bar: nombreBar,
+    telefono: telefonoBar,
+    turno: turno,
+    tipo: tipoActual,
+    imagenUrl: urlImagen,
+    precio: datos.precio || "Consultar",
+    incluyeEnsalada: datos.incluyeEnsalada || false,
+    incluyeCafe: datos.incluyeCafe || false,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-function login(){
-  const email=document.getElementById('email').value;
-  const password=document.getElementById('password').value;
-  auth.signInWithEmailAndPassword(email, password).then((userCredential) => {
-    const user = userCredential.user;
-    const esNuevo = user.metadata.creationTime === user.metadata.lastSignInTime;
-    if(esNuevo && !user.emailVerified){
-      document.getElementById('authMsg').innerText = "Verifica tu correo primero.";
-      auth.signOut(); return;
-    }
-    db.collection("bares").doc(user.uid).get().then(doc=>{
-      if(doc.exists){
-        nombreBar = doc.data().nombre;
-        telefonoBar = doc.data().telefono;
-        document.getElementById('nombreBar').innerText = nombreBar;
-        document.getElementById('authBox').classList.add('oculto');
-        document.getElementById('panelBox').classList.remove('oculto');
-        comprobarPublicacion();
-      } else { alert("No tienes bar asignado") }
-    })
-  }).catch((error) => { document.getElementById('authMsg').innerText = error.message });
+  document.getElementById('msg').innerText='✅ Publicado en '+turno;
 }
-
-function logout(){ auth.signOut().then(()=>location.reload()) }
 </script>
 </body>
 </html>
