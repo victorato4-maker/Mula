@@ -70,7 +70,7 @@ document.getElementById('app').innerHTML = `
     <h1>Publicar Menú de Hoy</h1>
     <div id="login-box">
         <input type="email" id="email" placeholder="Email del bar">
-        <input type="password" id="password" placeholder="Contraseña">
+        <input type="password" id="password" placeholder="Contraseña min. 6 letras">
         <button onclick="entrar()">Entrar / Registrarse</button>
     </div>
     <div id="panel-box" style="display:none">
@@ -110,16 +110,18 @@ auth.onAuthStateChanged(user => {
 })
 }
 
-// 3. FUNCIONES
+// 3. FUNCIONES - YA ARREGLADA PARA CREAR USUARIO
 function entrar(){
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
-  auth.signInWithEmailAndPassword(email, password)
+  // Creamos primero. Si ya existe, entonces hacemos login
+  auth.createUserWithEmailAndPassword(email, password)
+  .then(() => { alert("¡Usuario creado y sesión iniciada!"); })
   .catch((error) => {
-    if(error.code === 'auth/user-not-found'){
-      auth.createUserWithEmailAndPassword(email, password);
-    } else {
-      alert(error.message);
+    if(error.code === 'auth/email-already-in-use'){
+      auth.signInWithEmailAndPassword(email, password).catch(e => alert(e.message));
+    } else { 
+      alert(error.message); 
     }
   });
 }
