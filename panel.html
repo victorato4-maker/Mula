@@ -50,3 +50,34 @@ appId: "1:90841339782:web:267a5bfb0c8338882a7e07"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 let usuarioActual="";
+function entrar(){
+const email=document.getElementById('email').value;
+const pass=document.getElementById('password').value;
+if(!email||!pass){alert("Pon email y contraseña");return}
+db.collection("bares").doc(email).get().then(doc=>{
+if(doc.exists){
+if(doc.data().pass!== pass){alert("Contraseña incorrecta");return}
+usuarioActual=email;
+document.getElementById('barTelefono').value = doc.data().telefono || "";
+document.getElementById('bar').value = doc.data().nombre || email.split('@')[0];
+}else{
+db.collection("bares").doc(email).set({pass:pass, telefono:"", nombre:""})
+usuarioActual=email;
+alert("Registrado correctamente")
+}
+document.getElementById('loginBox').style.display="none";
+document.getElementById('panel').style.display="block";
+}).catch(err=>alert("ERROR: "+err.message))
+}
+function publicar(){
+const bar=document.getElementById('bar').value;
+const tel=document.getElementById('barTelefono').value;
+const turno=document.getElementById('turno').value;
+const texto=document.getElementById('texto').value;
+if(!bar||!texto){alert("Completa bar y menú");return}
+db.collection("bares").doc(usuarioActual).update({telefono: tel, nombre: bar});
+db.collection("anuncios").add({bar: bar+"@"+usuarioActual, telefono: tel, turno:turno, texto:texto, fecha:new Date().toLocaleDateString()}).then(()=>alert("¡Publicado!"))
+}
+</script>
+</body>
+</html>
