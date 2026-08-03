@@ -9,45 +9,22 @@ body{margin:0;font-family:Arial;background:#F5F7FA;color:#002F6C;padding:0;}
 header{background:#002F6C;padding:20px;text-align:center;color:#fff}
 header img{width:100px;background:#FFC300;padding:10px;border-radius:10px}
 header h1{color:#FFC300;margin:10px 0 5px;font-size:28px}
-header p{margin:0}
-.container{padding:20px;max-width:650px;margin:auto;padding-bottom:40px}
+.container{padding:20px;max-width:650px;margin:auto}
 .card{border-radius:16px;padding:18px;margin-bottom:8px;box-shadow:0 3px 10px rgba(0,0,0,.1);position:relative}
-.amarilla{background:#FFC300}
-.blanca{background:#fff;border:1px solid #eee}
+.amarilla{background:#FFC300}.blanca{background:#fff;border:1px solid #eee}
 .recomendado{position:absolute;top:-10px;right:15px;background:#002F6C;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:bold}
-.plantilla-captura{margin-bottom:10px}
-.plantilla-captura img{width:80px;background:#FFC300;padding:8px;border-radius:8px;display:block;margin:0 auto 10px}
-.plantilla-captura h3{text-align:center;font-size:24px;margin:5px 0}
-.plantilla-captura p{text-align:center;font-size:16px;white-space:pre-line;line-height:1.5}
-.plantilla-captura .web{text-align:center;font-weight:bold;margin-top:10px}
-.botones{display:flex;gap:10px;margin-bottom:20px}
-.botones a,.botones button{flex:1;text-align:center;text-decoration:none;font-weight:bold;padding:12px;border-radius:8px;border:none;cursor:pointer;font-size:14px}
-.btn-pedir{background:#25D366;color:#fff}
-.btn-descargar{background:#002F6C;color:#fff}
-.btn-compartir{background:#FFC300;color:#002F6C}
-.btn{background:#FFC300;color:#002F6C;padding:14px;border:none;border-radius:10px;width:100%;font-weight:bold;font-size:16px;cursor:pointer;margin-top:10px}
-#cerradoCartel{background:#FFC700;color:#0A2540;font-size:28px;font-weight:bold;padding:30px;text-align:center;border-radius:12px;margin:40px auto;max-width:600px}
+.plantilla-captura h3{text-align:center;font-size:24px}
+.plantilla-captura p{text-align:center;white-space:pre-line}
+.debug{background:red;color:#fff;padding:10px;text-align:center;font-weight:bold}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-<header>
-<img src="logo-menuplus.png">
-<h1>MenuPlus Mula</h1><p>Descubre las mejores ofertas de hoy</p>
-</header>
+<header><img src="logo-menuplus.png"><h1>MenuPlus Mula</h1></header>
 <div class="container">
-<h2>Bares en Mula</h2><p id="fecha" style="margin-bottom:20px">Actualizado hoy</p>
-
+<div id="debug" class="debug">Cargando...</div>
 <div id="listaAnuncios"></div>
-<div id="cerradoCartel" style="display:none">CERRADO: VUELVE A PARTIR DE LAS 8:00</div>
-
-<div style="border:2px solid #FFC300;padding:20px;border-radius:16px;margin-top:30px;text-align:center">
-<h3>¿Eres dueño de un bar en Mula?</h3>
-<p>Publica tu menú gratis cada día</p>
-<button class="btn" onclick="window.location.href='panel.html'">Publica tu oferta aquí</button>
-</div>
 </div>
 
 <script>
@@ -69,70 +46,33 @@ function getTurno(){
   return"cerrado";
 }
 
-function descargarImagen(id){
-  html2canvas(document.getElementById('plantilla-'+id), {scale: 2}).then(canvas=>{
-    const a=document.createElement('a'); 
-    a.download='oferta-menuplus-mula.png'; 
-    a.href=canvas.toDataURL('image/png'); 
-    a.click()
-  })
-}
-
-function compartirWhatsApp(id){
-  const bar = document.querySelector(`#plantilla-${id} h3`).innerText;
-  const texto = document.querySelector(`#plantilla-${id} p`).innerText;
-  const t = getTurno();
-  const mensaje = `🍽️ *MENUPLUS MULA* - ${t.toUpperCase()}\n\n*${bar}*\n\n${texto}\n\nVer todas las ofertas: https://menuplus.es`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`,'_blank');
-}
-
-function pintar(anuncios){
-  const lista=document.getElementById('listaAnuncios');
-  const cartel=document.getElementById('cerradoCartel');
-  const t=getTurno();
-  
-  if(t==="cerrado"){
-    lista.innerHTML="";
-    cartel.style.display="block";
-    return;
-  }
-  cartel.style.display="none";
-  
-  const filtrados = anuncios.filter(a => a.turno === t);
-  
-  if(filtrados.length===0){
-    lista.innerHTML="<p style='text-align:center;font-size:18px'>No hay ofertas activas ahora mismo para "+t+"</p>";
-    return;
-  }
-  
-  lista.innerHTML = filtrados.map((a,i)=>{
-    const txtColor = i===0 ? '#002F6C' : '#333';
-    const webColor = i===0 ? '#002F6C' : '#FFC300';
-    // Si no hay telefono, el boton ira a un 600000 por defecto
-    const tel = a.telefono ? a.telefono.replace(/\D/g,'') : '600000000';
-    return `
-    <div id="plantilla-${i}" class="plantilla-captura card ${i===0?'amarilla':'blanca'}">
-      ${i===0?'<div class="recomendado">RECOMENDADO MENUPLUS</div>':''}
-      <img src="logo-menuplus.png">
-      <h3 style="color:${txtColor}">${a.bar.toUpperCase()}</h3>
-      <p style="color:${txtColor}">${a.texto}</p>
-      <p class="web" style="color:${webColor}">menuplus.es</p>
-    </div>
-    <div class="botones">
-      <a href="https://wa.me/34${tel}" target="_blank" class="btn-pedir">📲 Pedir al Bar</a>
-      <button class="btn-descargar" onclick="descargarImagen(${i})">📥 Imagen</button>
-      <button class="btn-compartir" onclick="compartirWhatsApp(${i})">📤 Compartir</button>
-    </div>
-  `}).join('');
-}
+const debug = document.getElementById('debug');
+const t = getTurno();
+debug.innerText = "Turno actual: " + t + ". Leyendo Firebase...";
 
 db.collection("anuncios").onSnapshot(snapshot=>{
+  debug.innerText = "Total ofertas en BD: " + snapshot.size;
+  
   const anuncios=[];
   snapshot.forEach(doc=>anuncios.push(doc.data()));
-  pintar(anuncios);
+  
+  const filtrados = anuncios.filter(a => a.turno && a.turno.toLowerCase() === t);
+  
+  debug.innerText += " | Ofertas para "+t+": " + filtrados.length;
+  
+  if(filtrados.length===0){
+    document.getElementById('listaAnuncios').innerHTML="<p>No hay ofertas para "+t+"</p>";
+    return;
+  }
+  
+  document.getElementById('listaAnuncios').innerHTML = filtrados.map((a,i)=>{
+    return `<div class="card ${i===0?'amarilla':'blanca'}">
+      ${i===0?'<div class="recomendado">RECOMENDADO</div>':''}
+      <h3>${a.bar.toUpperCase()}</h3>
+      <p>${a.texto}</p>
+    </div>`
+  }).join('');
 });
-
-document.getElementById('fecha').innerText="Actualizado hoy, "+new Date().toLocaleDateString('es-ES');
 </script>
 </body>
 </html>
