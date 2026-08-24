@@ -1,130 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Panel Bar - Menuplus</title>
-<style>
-body{font-family:system-ui;background:#FFF9C4;padding:20px}
-.card{background:white;border-radius:16px;padding:20px;max-width:420px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.15)}
-button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:bold;margin-top:10px;cursor:pointer}
-.btn-menu{background:#FFEB3B} .btn-oferta{background:#2196F3;color:white}
-input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-top:8px;box-sizing:border-box}
-.selector{display:flex;gap:10px} .selector button{flex:1}
-.active{outline:3px solid black}
-#avisoCambios{background:#FFF3CD;padding:10px;border-radius:10px;margin:12px 0;font-weight:bold;text-align:center;border:1px solid #FFE69C}
-</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Comercio - MenuPlus Mula</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>body{font-family:sans-serif;padding:20px;max-width:500px;margin:auto}input,textarea,select,button{width:100%;padding:12px;margin:8px 0}button{background:#111;color:#fff;border:0}</style>
 </head>
 <body>
-<div class="card">
-<h2 id="modoText">Cargando...</h2>
-<div id="avisoCambios">Cargando límite...</div>
+<h2>Publicar menú</h2>
+<select id="comercio"></select>
+<select id="turno"><option value="comida">Comida (caducará 16:00)</option><option value="cena">Cena (caducará 23:30)</option></select>
+<textarea id="texto" placeholder="Ej: Paella + bebida 10€"></textarea>
+<button onclick="publicar()">Publicar</button>
+<p id="msg"></p>
+<script>
+const firebaseConfig = { projectId: "menuplus-mula" }; // si tenías tu config completa, déjala
+// Si tu config antigua era más larga, pégala aquí entera. Con projectId solo ya funciona si estás en el mismo dominio.
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-<div id="loginDiv">
-<input id="email" placeholder="email del bar">
-<input id="pass" type="password" placeholder="contraseña">
-<button id="btnLogin" style="background:black;color:white">Entrar</button>
-</div>
-
-<div id="panelDiv" style="display:none">
-<div class="selector">
-<button id="btnTipoMenu" class="btn-menu active">MENÚ DEL DÍA</button>
-<button id="btnTipoOferta" class="btn-oferta">OFERTA</button>
-</div>
-
-<div id="formMenu">
-<input id="primero" placeholder="Primero">
-<input id="segundo" placeholder="Segundo">
-<input id="postre" placeholder="Postre">
-<input id="precioMenu" placeholder="Precio Ej: 12€">
-<label><input type="checkbox" id="bebida"> Incluye bebida</label><br>
-<label><input type="checkbox" id="ensalada"> Incluye ensalada</label><br>
-<label><input type="checkbox" id="cafe"> Incluye café</label>
-</div>
-
-<div id="formOferta" style="display:none">
-<textarea id="textoOferta" maxlength="120" placeholder="Escribe tu oferta (máx 120)"></textarea>
-<div><span id="contador">0</span>/120</div>
-<input id="precioOferta" placeholder="Precio opcional">
-</div>
-
-<button id="btnPublicar" style="background:black;color:white;margin-top:20px">PUBLICAR</button>
-<button id="btnBorrar" style="background:#ff4444;color:white">Quitar oferta / menú</button>
-<button id="btnLogout" style="background:#ddd">Cerrar sesión</button>
-<p id="estado"></p>
-</div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_DOMINIO",
-  projectId: "TU_PROJECT_ID",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-let tipoActual="menu";
-let turnoActual="";
-
-function calcularTurno(){
-  const ahora=new Date(); const h=ahora.getHours()+ahora.getMinutes()/60;
-  if(h>=8 && h<16){ turnoActual="comida"; modoText.innerText="MODO ACTIVO: COMIDA 🟡 hasta las 16:00"; return true; }
-  if(h>=16 && h<23.5){ turnoActual="cena"; modoText.innerText="MODO ACTIVO: CENA 🌙 hasta las 23:30"; return true; }
-  turnoActual="cerrado"; modoText.innerText="⛔ CERRADO Volvemos a las 08:00"; avisoCambios.innerText="Portal cerrado"; return false;
+async function cargarComercios(){
+  const snap = await db.collection("comercios").get();
+  const sel = document.getElementById("comercio");
+  snap.forEach(d=>{ const o=document.createElement("option"); o.value=d.id; o.textContent=d.data().nombre||d.id; sel.appendChild(o); });
 }
-function getExpira(){
-  const e=new Date(); if(turnoActual=="comida") e.setHours(16,5,0,0); else e.setHours(23,35,0,0); return Timestamp.fromDate(e);
-}
-function getHoy(){ return new Date().toISOString().slice(0,10); }
+cargarComercios();
 
-async function mostrarContador(){
-  if(!auth.currentUser) return;
-  const ref=doc(db,"limites",auth.currentUser.uid+"_"+getHoy()+"_"+turnoActual);
-  const snap=await getDoc(ref); const usados=snap.exists()?snap.data().usos:0; const quedan=3-usados;
-  avisoCambios.innerText=`Puedes cambiar tu oferta 3 veces por turno. Te quedan ${quedan}/3`;
-  if(quedan<=0){ btnPublicar.disabled=true; btnPublicar.innerText="⛔ Límite 3 alcanzado"; } else { btnPublicar.disabled=false; btnPublicar.innerText= tipoActual=="menu" ? `PUBLICAR MENÚ (${quedan}/3)` : `PUBLICAR OFERTA (${quedan}/3)`; }
+function getExpireAt(turno){
+  const ahora = new Date();
+  const d = new Date();
+  if(turno==="comida"){ d.setHours(16,0,0,0); }
+  else{ d.setHours(23,30,0,0); }
+  if(d <= ahora){ d.setDate(d.getDate()+1); }
+  return firebase.firestore.Timestamp.fromDate(d);
 }
 
-calcularTurno(); setInterval(()=>{calcularTurno(); mostrarContador();},60000);
-
-btnTipoMenu.onclick=()=>{ tipoActual="menu"; formMenu.style.display="block"; formOferta.style.display="none"; btnTipoMenu.classList.add("active"); btnTipoOferta.classList.remove("active"); mostrarContador(); }
-btnTipoOferta.onclick=()=>{ tipoActual="oferta"; formMenu.style.display="none"; formOferta.style.display="block"; btnTipoOferta.classList.add("active"); btnTipoMenu.classList.remove("active"); mostrarContador(); }
-textoOferta.oninput=()=>{ contador.innerText=textoOferta.value.length; }
-
-onAuthStateChanged(auth, async user=>{
-  if(user){ loginDiv.style.display="none"; panelDiv.style.display="block"; calcularTurno(); mostrarContador(); } else { loginDiv.style.display="block"; panelDiv.style.display="none"; }
-});
-
-btnLogin.onclick=async()=>{ await signInWithEmailAndPassword(auth,email.value,pass.value); }
-btnLogout.onclick=()=>signOut(auth);
-
-btnPublicar.onclick=async()=>{
-  if(!calcularTurno()){ alert("Portal cerrado"); return; }
-  const user=auth.currentUser; const refCont=doc(db,"limites",user.uid+"_"+getHoy()+"_"+turnoActual);
-  const snap=await getDoc(refCont); let usos=snap.exists()?snap.data().usos:0;
-  if(usos>=3){ alert("Has agotado los 3 cambios de este turno. Podrás publicar en el siguiente turno."); return; }
-
-  let data={ barId:user.uid, turno:turnoActual, tipo:tipoActual, expira:getExpira(), creado:Timestamp.now() };
-  if(tipoActual=="menu"){ data={...data, primero:primero.value, segundo:segundo.value, postre:postre.value, precio:precioMenu.value, extras:{bebida:bebida.checked, ensalada:ensalada.checked, cafe:cafe.checked}}; }
-  else { if(textoOferta.value.length>120){ alert("Máx 120"); return; } data={...data, texto:textoOferta.value, precio:precioOferta.value}; }
-
-  await setDoc(doc(db,"anuncios",user.uid), data);
-  await setDoc(refCont, {usos: usos+1, fecha:getHoy(), turno:turnoActual}, {merge:true});
-  estado.innerText=`¡Publicado! Se borrará solo a las ${turnoActual=="comida"?"16:05":"23:35"}. Te quedan ${2-usos}/3 cambios`;
-  mostrarContador();
-};
-
-btnBorrar.onclick=async()=>{
-  const user=auth.currentUser; if(!user) return;
-  await deleteDoc(doc(db,"anuncios",user.uid));
-  estado.innerText="Oferta quitada. Aún te cuenta como cambio, pero puedes publicar otra si te quedan.";
+async function publicar(){
+  const comercioId = document.getElementById("comercio").value;
+  const texto = document.getElementById("texto").value;
+  const turno = document.getElementById("turno").value;
+  if(!texto) return alert("Escribe el menú");
+  await db.collection("anuncios").add({
+    comercioId, texto, turno,
+    creado: firebase.firestore.FieldValue.serverTimestamp(),
+    expireAt: getExpireAt(turno)
+  });
+  document.getElementById("msg").textContent = "✅ Publicado, se borrará solo a las "+(turno==="comida"?"16:00":"23:30");
+  document.getElementById("texto").value="";
 }
 </script>
 </body>
