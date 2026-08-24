@@ -1,28 +1,22 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MenuPlus Mula</title>
-<style>body{font-family:Arial;background:#F8F9FA;margin:0;padding-bottom:80px;color:#002F6C}header{background:#002F6C;color:#FFC300;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}header img{height:38px}.container{max-width:700px;margin:auto;padding:15px}.tabs{display:flex;gap:8px;justify-content:center;margin:15px 0}.tabs button{flex:1;max-width:140px;padding:10px;border:2px solid #002F6C;border-radius:10px;font-weight:800;background:#fff;color:#002F6C;cursor:pointer}.tabs button.active{background:#002F6C;color:#FFC300}.tarjeta{background:#fff;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.1)}.tarjeta img{width:100%;display:block}</style>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-</head>
-<body>
-<header><img src="logo-menuplus.png"><b>MenuPlus Mula</b></header>
-<div class="container">
-<div class="tabs"><button id="tabComida" class="active" onclick="setFiltro('comida')">🍽️ Comida</button><button id="tabCena" onclick="setFiltro('cena')">🌙 Cena</button></div>
-<div id="lista">Cargando...</div>
-</div>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MenuPlus Mula</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>body{font-family:sans-serif;padding:15px} .card{border:1px solid #ddd;padding:12px;margin:10px 0;border-radius:8px}</style>
+</head><body><h1>Menús hoy en Mula</h1><div id="lista">Cargando...</div>
 <script>
-const firebaseConfig={apiKey:"AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",authDomain:"menuplus-mula.firebaseapp.com",projectId:"menuplus-mula"};
+const firebaseConfig = { projectId: "menuplus-mula" };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-let filtro=getAuto();
-function getAuto(){const h=new Date().getHours()+new Date().getMinutes()/60;if(h>=8&&h<16)return'comida';if(h>=16&&h<24)return'cena';return'cerrado';}
-function setFiltro(t){filtro=t;document.getElementById('tabComida').classList.toggle('active',t=='comida');document.getElementById('tabCena').classList.toggle('active',t=='cena');cargar();}
-async function cargar(){const c=document.getElementById('lista');if(getAuto()=='cerrado'){c.innerHTML="<p style='text-align:center'>⛔ Cerrado hasta las 8:00</p>";return;}const hoy=new Date().toISOString().split('T')[0];c.innerHTML="Buscando...";const snap=await db.collection("anuncios").where("fecha","==",hoy).where("turno","==",filtro).get();c.innerHTML="";if(snap.empty){c.innerHTML="<p style='text-align:center'>No hay ofertas de "+filtro+" hoy</p>";return;}snap.forEach(d=>{const x=d.data();c.innerHTML+=`<div class="tarjeta"><img src="${x.imagenUrl}"><div style="padding:12px;display:flex;justify-content:space-between;font-weight:800"><span>${x.bar}</span><span>${x.precio}€</span></div></div>`;});}
-cargar();
-</script>
-</body>
-</html>
+const db = firebase.firestore();
+db.collection("anuncios").orderBy("creado","desc").onSnapshot(snap=>{
+  const lista=document.getElementById("lista"); lista.innerHTML="";
+  if(snap.empty){ lista.innerHTML="No hay menús ahora"; return; }
+  snap.forEach(d=>{
+    const data=d.data();
+    // El TTL ya borra los caducados, pero por seguridad no mostramos si expireAt ya pasó
+    if(data.expireAt && data.expireAt.toDate() < new Date()) return;
+    const div=document.createElement("div"); div.className="card";
+    div.innerHTML=`<b>${data.comercioId}</b><br>${data.texto}<br><small>Caduca: ${data.expireAt?data.expireAt.toDate().toLocaleString():""}</small>`;
+    lista.appendChild(div);
+  });
+});
+</script></body></html>
