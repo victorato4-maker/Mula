@@ -1,32 +1,131 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Bar - MenuPlus</title>
-<style>body{font-family:Arial;background:#002F6C;display:flex;justify-content:center;padding:15px;margin:0}.box{background:#fff;padding:22px;border-radius:16px;width:100%;max-width:460px}h2{color:#002F6C;text-align:center}input{width:100%;padding:11px;margin:6px 0;border:2px solid #ddd;border-radius:8px;box-sizing:border-box}button{background:#FFC300;color:#002F6C;border:none;padding:13px;border-radius:10px;width:100%;font-weight:900;cursor:pointer;margin-top:8px}button:disabled{background:#ccc}.hidden{display:none}#previewCard{width:1080px;height:1080px;background:#FFC300;color:#002F6C;padding:50px;box-sizing:border-box;position:absolute;left:-9999px;display:flex;flex-direction:column;justify-content:space-between}#previewCard img.logo{height:90px;object-fit:contain}</style>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel Bar - Menuplus</title>
+<style>
+body{font-family:system-ui;background:#FFF9C4;padding:20px}
+.card{background:white;border-radius:16px;padding:20px;max-width:420px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:bold;margin-top:10px;cursor:pointer}
+.btn-menu{background:#FFEB3B} .btn-oferta{background:#2196F3;color:white}
+input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-top:8px;box-sizing:border-box}
+.selector{display:flex;gap:10px} .selector button{flex:1}
+.active{outline:3px solid black}
+#avisoCambios{background:#FFF3CD;padding:10px;border-radius:10px;margin:12px 0;font-weight:bold;text-align:center;border:1px solid #FFE69C}
+</style>
 </head>
 <body>
-<div class="box" id="loginBox"><h2><img src="logo-menuplus.png" style="height:50px"><br>MenuPlus</h2><p id="msgLogin" style="color:red;text-align:center"></p><input id="email" placeholder="Email"><input id="password" type="password" placeholder="Contraseña"><input id="regNombre" placeholder="Nombre del Bar (solo registro)"><button onclick="entrar()">Entrar</button><button onclick="registrar()" style="background:#002F6C;color:#FFC300">Registrarme</button></div>
-<div class="box hidden" id="panel"><h2 id="bienvenida"></h2><p id="turnoInfo" style="text-align:center;font-weight:800"></p><div id="miActual" class="hidden" style="background:#fff3cd;padding:12px;border-radius:10px;border:2px solid #FFC300;margin-bottom:12px"><b>Ya tienes oferta para <span id="miTurnoTxt"></span>:</b><div id="textoActual" style="white-space:pre-wrap"></div><button onclick="quitarOferta()" style="background:#c00;color:#fff">Quitar y publicar otra</button></div><input id="primeros" placeholder="Primeros: Ej Lentejas, Ensalada"><input id="segundos" placeholder="Segundos: Ej Pollo, Lubina"><input id="postre" placeholder="Postre"><input id="precio" type="number" step="0.5" placeholder="Precio €"><div style="margin:8px 0"><label><input type="checkbox" id="incBebida" checked> Bebida</label> <label><input type="checkbox" id="incCafe"> Cafe</label></div><div style="background:#F8F9FA;padding:10px;border-radius:8px"><label><input type="checkbox" id="paraNoche"> Publicar tambien para esta noche</label></div><button id="btnPub" onclick="publicar()">Publicar</button><button onclick="logout()" style="background:#eee">Salir</button><p id="msg"></p></div>
-<div id="previewCard"><div><img class="logo" src="logo-menuplus.png" crossorigin="anonymous"><div style="width:80px;height:8px;background:#fff;margin:20px 0;border-radius:4px"></div><div id="cBar" style="font-size:68px;font-weight:900;text-transform:uppercase;line-height:.9"></div><div id="cBody" style="font-size:36px;white-space:pre-wrap;margin-top:25px;line-height:1.25"></div></div><div style="display:flex;justify-content:space-between;align-items:end"><div id="cIncluye" style="background:#002F6C;color:#FFC300;padding:10px 20px;border-radius:30px;font-size:24px"></div><div id="cPrecio" style="font-size:110px;font-weight:900"></div></div></div>
-<script>
-const firebaseConfig={apiKey:"AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",authDomain:"menuplus-mula.firebaseapp.com",projectId:"menuplus-mula",storageBucket:"menuplus-mula.firebasestorage.app"};
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.firestore(),storage=firebase.storage();
-let miId=null,miData=null;
-function getHorario(){const h=new Date().getHours()+new Date().getMinutes()/60;if(h>=8&&h<16)return{turno:'comida',ok:true};if(h>=16&&h<24)return{turno:'cena',ok:true};return{turno:'cerrado',ok:false};}
-auth.onAuthStateChanged(async u=>{if(!u){loginBox.classList.remove('hidden');panel.classList.add('hidden');return;}await u.reload();if(!u.emailVerified){alert("Verifica email");await u.sendEmailVerification();auth.signOut();return;}loginBox.classList.add('hidden');panel.classList.remove('hidden');const hor=getHorario();turnoInfo.innerText="Turno: "+hor.turno.toUpperCase();if(!hor.ok){btnPub.disabled=true;btnPub.innerText="Cerrado 00:00-07:59";}const doc=await db.collection("bares").doc(u.uid).get();const d=doc.data();if(d?.baneado){alert("Cuenta baneada");auth.signOut();return;}bienvenida.innerText="Hola "+(d?.nombre||"");const hoy=new Date().toISOString().split('T')[0];const snap=await db.collection("anuncios").where("barId","==",u.uid).where("fecha","==",hoy).where("turno","==",hor.turno).limit(1).get();if(!snap.empty){miId=snap.docs[0].id;miData=snap.docs[0].data();miActual.classList.remove('hidden');miTurnoTxt.innerText=hor.turno;textoActual.innerText=miData.texto;btnPub.disabled=true;btnPub.innerText="Ya publicado";}});
-async function registrar(){const e=email.value.trim(),p=password.value,n=regNombre.value.trim();if(!e||!p||!n)return alert("Falta dato");const c=await auth.createUserWithEmailAndPassword(e,p);await db.collection("bares").doc(c.user.uid).set({email:e,nombre:n,baneado:false});await c.user.sendEmailVerification();alert("Revisa tu correo");}
-function entrar(){auth.signInWithEmailAndPassword(email.value,password.value).catch(e=>msgLogin.innerText=e.message);}
-function logout(){auth.signOut();}
-async function quitarOferta(){if(!miId||!miData)return;if(!confirm("Quitar?"))return;try{await storage.refFromURL(miData.imagenUrl).delete();}catch(e){}await db.collection("anuncios").doc(miId).delete();location.reload();}
-async function publicar(){const hor=getHorario();if(!hor.ok)return alert("Cerrado");if(miId)return alert("Ya tienes oferta");if(!primeros.value||!segundos.value||!precio.value)return alert("Falta plato/precio");const bar=(await db.collection("bares").doc(auth.currentUser.uid).get()).data().nombre;const incluye=[];if(incBebida.checked)incluye.push("Bebida");if(incCafe.checked)incluye.push("Cafe");const texto=`PRIMEROS\n${primeros.value}\n\nSEGUNDOS\n${segundos.value}\n\nPOSTRE\n${postre.value}`;cBar.innerText=bar;cBody.innerText=texto;cIncluye.innerText=incluye.length?'Incluye '+incluye.join(' + '):'';cPrecio.innerText=precio.value+"€";const canvas=await html2canvas(document.getElementById('previewCard'));const base64=canvas.toDataURL('image/jpeg',0.82);const hoy=new Date().toISOString().split('T')[0];const ref=storage.ref(`anuncios/${hoy}/${auth.currentUser.uid}_${hor.turno}.jpg`);await ref.putString(base64,'data_url');const url=await ref.getDownloadURL();await db.collection("anuncios").add({bar,barId:auth.currentUser.uid,texto,precio:precio.value,turno:hor.turno,fecha:hoy,imagenUrl:url,incluye,timestamp:firebase.firestore.FieldValue.serverTimestamp()});if(paraNoche.checked&&hor.turno=='comida'){const ref2=storage.ref(`anuncios/${hoy}/${auth.currentUser.uid}_cena.jpg`);await ref2.putString(base64,'data_url');const url2=await ref2.getDownloadURL();await db.collection("anuncios").add({bar,barId:auth.currentUser.uid,texto,precio:precio.value,turno:'cena',fecha:hoy,imagenUrl:url2,incluye,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}msg.innerText="Publicado";setTimeout(()=>location.reload(),1200);}
+<div class="card">
+<h2 id="modoText">Cargando...</h2>
+<div id="avisoCambios">Cargando límite...</div>
+
+<div id="loginDiv">
+<input id="email" placeholder="email del bar">
+<input id="pass" type="password" placeholder="contraseña">
+<button id="btnLogin" style="background:black;color:white">Entrar</button>
+</div>
+
+<div id="panelDiv" style="display:none">
+<div class="selector">
+<button id="btnTipoMenu" class="btn-menu active">MENÚ DEL DÍA</button>
+<button id="btnTipoOferta" class="btn-oferta">OFERTA</button>
+</div>
+
+<div id="formMenu">
+<input id="primero" placeholder="Primero">
+<input id="segundo" placeholder="Segundo">
+<input id="postre" placeholder="Postre">
+<input id="precioMenu" placeholder="Precio Ej: 12€">
+<label><input type="checkbox" id="bebida"> Incluye bebida</label><br>
+<label><input type="checkbox" id="ensalada"> Incluye ensalada</label><br>
+<label><input type="checkbox" id="cafe"> Incluye café</label>
+</div>
+
+<div id="formOferta" style="display:none">
+<textarea id="textoOferta" maxlength="120" placeholder="Escribe tu oferta (máx 120)"></textarea>
+<div><span id="contador">0</span>/120</div>
+<input id="precioOferta" placeholder="Precio opcional">
+</div>
+
+<button id="btnPublicar" style="background:black;color:white;margin-top:20px">PUBLICAR</button>
+<button id="btnBorrar" style="background:#ff4444;color:white">Quitar oferta / menú</button>
+<button id="btnLogout" style="background:#ddd">Cerrar sesión</button>
+<p id="estado"></p>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_DOMINIO",
+  projectId: "TU_PROJECT_ID",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let tipoActual="menu";
+let turnoActual="";
+
+function calcularTurno(){
+  const ahora=new Date(); const h=ahora.getHours()+ahora.getMinutes()/60;
+  if(h>=8 && h<16){ turnoActual="comida"; modoText.innerText="MODO ACTIVO: COMIDA 🟡 hasta las 16:00"; return true; }
+  if(h>=16 && h<23.5){ turnoActual="cena"; modoText.innerText="MODO ACTIVO: CENA 🌙 hasta las 23:30"; return true; }
+  turnoActual="cerrado"; modoText.innerText="⛔ CERRADO Volvemos a las 08:00"; avisoCambios.innerText="Portal cerrado"; return false;
+}
+function getExpira(){
+  const e=new Date(); if(turnoActual=="comida") e.setHours(16,5,0,0); else e.setHours(23,35,0,0); return Timestamp.fromDate(e);
+}
+function getHoy(){ return new Date().toISOString().slice(0,10); }
+
+async function mostrarContador(){
+  if(!auth.currentUser) return;
+  const ref=doc(db,"limites",auth.currentUser.uid+"_"+getHoy()+"_"+turnoActual);
+  const snap=await getDoc(ref); const usados=snap.exists()?snap.data().usos:0; const quedan=3-usados;
+  avisoCambios.innerText=`Puedes cambiar tu oferta 3 veces por turno. Te quedan ${quedan}/3`;
+  if(quedan<=0){ btnPublicar.disabled=true; btnPublicar.innerText="⛔ Límite 3 alcanzado"; } else { btnPublicar.disabled=false; btnPublicar.innerText= tipoActual=="menu" ? `PUBLICAR MENÚ (${quedan}/3)` : `PUBLICAR OFERTA (${quedan}/3)`; }
+}
+
+calcularTurno(); setInterval(()=>{calcularTurno(); mostrarContador();},60000);
+
+btnTipoMenu.onclick=()=>{ tipoActual="menu"; formMenu.style.display="block"; formOferta.style.display="none"; btnTipoMenu.classList.add("active"); btnTipoOferta.classList.remove("active"); mostrarContador(); }
+btnTipoOferta.onclick=()=>{ tipoActual="oferta"; formMenu.style.display="none"; formOferta.style.display="block"; btnTipoOferta.classList.add("active"); btnTipoMenu.classList.remove("active"); mostrarContador(); }
+textoOferta.oninput=()=>{ contador.innerText=textoOferta.value.length; }
+
+onAuthStateChanged(auth, async user=>{
+  if(user){ loginDiv.style.display="none"; panelDiv.style.display="block"; calcularTurno(); mostrarContador(); } else { loginDiv.style.display="block"; panelDiv.style.display="none"; }
+});
+
+btnLogin.onclick=async()=>{ await signInWithEmailAndPassword(auth,email.value,pass.value); }
+btnLogout.onclick=()=>signOut(auth);
+
+btnPublicar.onclick=async()=>{
+  if(!calcularTurno()){ alert("Portal cerrado"); return; }
+  const user=auth.currentUser; const refCont=doc(db,"limites",user.uid+"_"+getHoy()+"_"+turnoActual);
+  const snap=await getDoc(refCont); let usos=snap.exists()?snap.data().usos:0;
+  if(usos>=3){ alert("Has agotado los 3 cambios de este turno. Podrás publicar en el siguiente turno."); return; }
+
+  let data={ barId:user.uid, turno:turnoActual, tipo:tipoActual, expira:getExpira(), creado:Timestamp.now() };
+  if(tipoActual=="menu"){ data={...data, primero:primero.value, segundo:segundo.value, postre:postre.value, precio:precioMenu.value, extras:{bebida:bebida.checked, ensalada:ensalada.checked, cafe:cafe.checked}}; }
+  else { if(textoOferta.value.length>120){ alert("Máx 120"); return; } data={...data, texto:textoOferta.value, precio:precioOferta.value}; }
+
+  await setDoc(doc(db,"anuncios",user.uid), data);
+  await setDoc(refCont, {usos: usos+1, fecha:getHoy(), turno:turnoActual}, {merge:true});
+  estado.innerText=`¡Publicado! Se borrará solo a las ${turnoActual=="comida"?"16:05":"23:35"}. Te quedan ${2-usos}/3 cambios`;
+  mostrarContador();
+};
+
+btnBorrar.onclick=async()=>{
+  const user=auth.currentUser; if(!user) return;
+  await deleteDoc(doc(db,"anuncios",user.uid));
+  estado.innerText="Oferta quitada. Aún te cuenta como cambio, pero puedes publicar otra si te quedan.";
+}
 </script>
 </body>
 </html>
