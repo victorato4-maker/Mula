@@ -1,35 +1,9 @@
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Master</title>
-<style>body{font-family:Arial;background:#F5F7FA;padding:15px}h1{color:#002F6C;text-align:center}.box{background:#fff;padding:12px;border-radius:12px;margin:10px 0;box-shadow:0 2px 6px rgba(0,0,0,.1)}.baneado{border-left:6px solid red;background:#ffe6e6}button{padding:10px;border:none;border-radius:8px;font-weight:800;margin:3px;cursor:pointer}.del{background:#c00;color:#fff}.ban{background:red;color:#fff}.ok{background:green;color:#fff}.blue{background:#002F6C;color:#FFC300}img{width:100%;max-width:320px;border-radius:10px}</style>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-</head>
-<body>
-<h1>ADMIN MASTER</h1>
-<p style="text-align:center"><img src="logo-menuplus.png" style="height:40px;width:auto"></p>
-<div style="text-align:center"><button class="blue" onclick="cargarOfertas()">Ver Ofertas Hoy</button><button class="blue" onclick="cargarBares()">Ver Bares / Banear</button><button class="del" onclick="borrarComida()">Borrar COMIDA hoy</button><button class="del" onclick="borrarTodoHoy()">Borrar TODO hoy</button></div>
-<div id="lista"></div>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Admin</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head><body><h2>Admin - Crear comercio</h2><input id="nombre" placeholder="Nombre bar"><button onclick="crear()">Crear</button>
 <script>
-const firebaseConfig={apiKey:"AIzaSyDJ1CtPxnua7mxrZTusCGgo1DocTAIpi0w",authDomain:"menuplus-mula.firebaseapp.com",projectId:"menuplus-mula",storageBucket:"menuplus-mula.firebasestorage.app"};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore(),storage=firebase.storage();
-const MI_EMAIL="victorato4@hotmail.com";
-firebase.auth().onAuthStateChanged(u=>{if(!u){location.href="panel.html";return;}if(u.email!==MI_EMAIL){alert("No eres admin");location.href="index.html";return;}cargarOfertas();});
-async function cargarOfertas(){const hoy=new Date().toISOString().split('T')[0];const snap=await db.collection("anuncios").where("fecha","==",hoy).get();let h="";if(snap.empty)h="<p>No hay ofertas</p>";snap.forEach(d=>{const x=d.data();h+=`<div class="box"><b>${x.bar} - ${x.turno} - ${x.precio}€</b><br><img src="${x.imagenUrl}"><br>${x.texto}<br><button class="del" onclick="borrarUno('${d.id}')">Borrar</button></div>`;});document.getElementById('lista').innerHTML=h;}
-async function cargarBares(){const snap=await db.collection("bares").get();let h="<h2>Bares</h2>";snap.forEach(d=>{const x=d.data();const ban=x.baneado;h+=`<div class="box ${ban?'baneado':''}"><b>${x.nombre||d.id}</b> - ${x.email||''} ${ban?'<b style=color:red> BANEADO</b>':''}<br>${ban?`<button class="ok" onclick="desbanear('${d.id}')">Desbanear</button>`:`<button class="ban" onclick="banear('${d.id}')">Banear</button>`}<button class="del" onclick="borrarDeBar('${d.id}')">Borrar sus ofertas</button></div>`;});document.getElementById('lista').innerHTML=h;}
-function banear(id){if(confirm("Banear?"))db.collection("bares").doc(id).set({baneado:true},{merge:true}).then(cargarBares);}
-function desbanear(id){db.collection("bares").doc(id).set({baneado:false},{merge:true}).then(cargarBares);}
-async function borrarUno(id){if(!confirm("Borrar?"))return;const doc=await db.collection("anuncios").doc(id).get();try{await storage.refFromURL(doc.data().imagenUrl).delete();}catch(e){}await db.collection("anuncios").doc(id).delete();cargarOfertas();}
-async function borrarDeBar(barId){if(!confirm("Borrar todas de este bar?"))return;const s=await db.collection("anuncios").where("barId","==",barId).get();for(const d of s.docs){try{await storage.refFromURL(d.data().imagenUrl).delete();}catch(e){}}const b=db.batch();s.forEach(d=>b.delete(d.ref));await b.commit();cargarOfertas();}
-async function borrarComida(){if(!confirm("Borrar COMIDA hoy?"))return;const hoy=new Date().toISOString().split('T')[0];const s=await db.collection("anuncios").where("fecha","==",hoy).where("turno","==","comida").get();for(const d of s.docs){try{await storage.refFromURL(d.data().imagenUrl).delete();}catch(e){}}const b=db.batch();s.forEach(d=>b.delete(d.ref));await b.commit();alert("Borrado");cargarOfertas();}
-async function borrarTodoHoy(){if(!confirm("Borrar TODO hoy?"))return;const hoy=new Date().toISOString().split('T')[0];const s=await db.collection("anuncios").where("fecha","==",hoy).get();for(const d of s.docs){try{await storage.refFromURL(d.data().imagenUrl).delete();}catch(e){}}const b=db.batch();s.forEach(d=>b.delete(d.ref));await b.commit();alert("Todo borrado");cargarOfertas();}
-</script>
-</body>
-</html>
+const firebaseConfig = { projectId: "menuplus-mula" };
+firebase.initializeApp(firebaseConfig); const db=firebase.firestore();
+async function crear(){ const n=document.getElementById("nombre").value; if(!n)return; await db.collection("comercios").add({nombre:n}); alert("Creado"); }
+</script></body></html>
